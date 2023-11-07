@@ -78,7 +78,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage("You: " + userMessage);
+		displayMessage("You: " + marked.parse(userMessage));
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
@@ -95,7 +95,7 @@ function initializeApp() {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
 			// Display the assistant's message in the chat log.
-			displayMessage("Jarg: " + assistantResponse);
+			displayMessage("Jarg: " + marked.parse(assistantResponse));
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -1176,7 +1176,7 @@ const toBase64 = (str) => {
 exports.toBase64 = toBase64;
 
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
-},{"./_shims/index.js":4,"./error.js":8,"./streaming.js":37,"./uploads.js":38,"./version.js":39,"_process":43,"buffer":41}],8:[function(require,module,exports){
+},{"./_shims/index.js":4,"./error.js":8,"./streaming.js":46,"./uploads.js":47,"./version.js":48,"_process":52,"buffer":50}],8:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1467,7 +1467,7 @@ exports.fileFromPath = Uploads.fileFromPath;
 exports = module.exports = OpenAI;
 exports.default = OpenAI;
 
-},{"./core.js":7,"./error.js":8,"./pagination.js":15,"./uploads.js":38,"openai/resources/index":34}],10:[function(require,module,exports){
+},{"./core.js":7,"./error.js":8,"./pagination.js":16,"./uploads.js":47,"openai/resources/index":43}],10:[function(require,module,exports){
 "use strict";
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
     if (kind === "m") throw new TypeError("Private method is not writable");
@@ -1480,11 +1480,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _AbstractChatCompletionRunner_instances, _AbstractChatCompletionRunner_connectedPromise, _AbstractChatCompletionRunner_resolveConnectedPromise, _AbstractChatCompletionRunner_rejectConnectedPromise, _AbstractChatCompletionRunner_endPromise, _AbstractChatCompletionRunner_resolveEndPromise, _AbstractChatCompletionRunner_rejectEndPromise, _AbstractChatCompletionRunner_listeners, _AbstractChatCompletionRunner_ended, _AbstractChatCompletionRunner_errored, _AbstractChatCompletionRunner_aborted, _AbstractChatCompletionRunner_catchingPromiseCreated, _AbstractChatCompletionRunner_getFinalContent, _AbstractChatCompletionRunner_getFinalFunctionCall, _AbstractChatCompletionRunner_getFinalFunctionCallResult, _AbstractChatCompletionRunner_calculateTotalUsage, _AbstractChatCompletionRunner_handleError;
+var _AbstractChatCompletionRunner_instances, _AbstractChatCompletionRunner_connectedPromise, _AbstractChatCompletionRunner_resolveConnectedPromise, _AbstractChatCompletionRunner_rejectConnectedPromise, _AbstractChatCompletionRunner_endPromise, _AbstractChatCompletionRunner_resolveEndPromise, _AbstractChatCompletionRunner_rejectEndPromise, _AbstractChatCompletionRunner_listeners, _AbstractChatCompletionRunner_ended, _AbstractChatCompletionRunner_errored, _AbstractChatCompletionRunner_aborted, _AbstractChatCompletionRunner_catchingPromiseCreated, _AbstractChatCompletionRunner_getFinalContent, _AbstractChatCompletionRunner_getFinalMessage, _AbstractChatCompletionRunner_getFinalFunctionCall, _AbstractChatCompletionRunner_getFinalFunctionCallResult, _AbstractChatCompletionRunner_calculateTotalUsage, _AbstractChatCompletionRunner_handleError, _AbstractChatCompletionRunner_validateParams, _AbstractChatCompletionRunner_stringifyFunctionCallResult;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AbstractChatCompletionRunner = void 0;
 const error_1 = require("openai/error");
 const RunnableFunction_1 = require("./RunnableFunction.js");
+const chatCompletionUtils_1 = require("./chatCompletionUtils.js");
+const DEFAULT_MAX_CHAT_COMPLETIONS = 10;
 class AbstractChatCompletionRunner {
     constructor() {
         _AbstractChatCompletionRunner_instances.add(this);
@@ -1509,10 +1511,18 @@ class AbstractChatCompletionRunner {
             }
             if (error instanceof error_1.APIUserAbortError) {
                 __classPrivateFieldSet(this, _AbstractChatCompletionRunner_aborted, true, "f");
-                this._emit('abort', error);
+                return this._emit('abort', error);
             }
-            const openAIError = error instanceof error_1.OpenAIError ? error : (new error_1.OpenAIError(error instanceof Error ? error.message : String(error)));
-            this._emit('error', openAIError);
+            if (error instanceof error_1.OpenAIError) {
+                return this._emit('error', error);
+            }
+            if (error instanceof Error) {
+                const openAIError = new error_1.OpenAIError(error.message);
+                // @ts-ignore
+                openAIError.cause = error;
+                return this._emit('error', openAIError);
+            }
+            return this._emit('error', new error_1.OpenAIError(String(error)));
         });
         __classPrivateFieldSet(this, _AbstractChatCompletionRunner_connectedPromise, new Promise((resolve, reject) => {
             __classPrivateFieldSet(this, _AbstractChatCompletionRunner_resolveConnectedPromise, resolve, "f");
@@ -1551,11 +1561,19 @@ class AbstractChatCompletionRunner {
         this.messages.push(message);
         if (emit) {
             this._emit('message', message);
-            if (message.role === 'function' && message.content) {
+            if (((0, chatCompletionUtils_1.isFunctionMessage)(message) || (0, chatCompletionUtils_1.isToolMessage)(message)) && message.content) {
+                // Note, this assumes that {role: 'tool', content: …} is always the result of a call of tool of type=function.
                 this._emit('functionCallResult', message.content);
             }
-            else if (message.function_call) {
+            else if ((0, chatCompletionUtils_1.isAssistantMessage)(message) && message.function_call) {
                 this._emit('functionCall', message.function_call);
+            }
+            else if ((0, chatCompletionUtils_1.isAssistantMessage)(message) && message.tool_calls) {
+                for (const tool_call of message.tool_calls) {
+                    if (tool_call.type === 'function') {
+                        this._emit('functionCall', tool_call.function);
+                    }
+                }
             }
         }
     }
@@ -1658,15 +1676,12 @@ class AbstractChatCompletionRunner {
         return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalContent).call(this);
     }
     /**
-     * @returns a promise that resolves with the the final ChatCompletionMessage, or rejects
-     * if an error occurred or the stream ended prematurely without producing a ChatCompletionMessage.
+     * @returns a promise that resolves with the the final assistant ChatCompletionMessage response,
+     * or rejects if an error occurred or the stream ended prematurely without producing a ChatCompletionMessage.
      */
     async finalMessage() {
         await this.done();
-        const message = this.messages[this.messages.length - 1];
-        if (!message)
-            throw new error_1.OpenAIError('stream ended without producing a ChatCompletionMessage');
-        return message;
+        return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalMessage).call(this);
     }
     /**
      * @returns a promise that resolves with the content of the final FunctionCall, or rejects
@@ -1699,6 +1714,16 @@ class AbstractChatCompletionRunner {
         if (listeners) {
             __classPrivateFieldGet(this, _AbstractChatCompletionRunner_listeners, "f")[event] = listeners.filter((l) => !l.once);
             listeners.forEach(({ listener }) => listener(...args));
+        }
+        if (event === 'abort') {
+            const error = args[0];
+            if (!__classPrivateFieldGet(this, _AbstractChatCompletionRunner_catchingPromiseCreated, "f") && !listeners?.length) {
+                Promise.reject(error);
+            }
+            __classPrivateFieldGet(this, _AbstractChatCompletionRunner_rejectConnectedPromise, "f").call(this, error);
+            __classPrivateFieldGet(this, _AbstractChatCompletionRunner_rejectEndPromise, "f").call(this, error);
+            this._emit('end');
+            return;
         }
         if (event === 'error') {
             // NOTE: _emit('error', error) should only be called from #handleError().
@@ -1744,6 +1769,7 @@ class AbstractChatCompletionRunner {
                 this.controller.abort();
             signal.addEventListener('abort', () => this.controller.abort());
         }
+        __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_validateParams).call(this, params);
         const chatCompletion = await completions.create({ ...params, stream: false }, { ...options, signal: this.controller.signal });
         this._connected();
         return this._addChatCompletion(chatCompletion);
@@ -1755,8 +1781,10 @@ class AbstractChatCompletionRunner {
         return await this._createChatCompletion(completions, params, options);
     }
     async _runFunctions(completions, params, options) {
+        const role = 'function';
         const { function_call = 'auto', stream, ...restParams } = params;
-        const isSingleFunctionCall = typeof function_call !== 'string' && function_call?.name;
+        const singleFunctionToCall = typeof function_call !== 'string' && function_call?.name;
+        const { maxChatCompletions = DEFAULT_MAX_CHAT_COMPLETIONS } = options || {};
         const functionsByName = {};
         for (const f of params.functions) {
             functionsByName[f.name || f.function.name] = f;
@@ -1769,7 +1797,7 @@ class AbstractChatCompletionRunner {
         for (const message of params.messages) {
             this._addMessage(message, false);
         }
-        for (let i = 0; i < (options?.maxChatCompletions ?? 5); ++i) {
+        for (let i = 0; i < maxChatCompletions; ++i) {
             const chatCompletion = await this._createChatCompletion(completions, {
                 ...restParams,
                 function_call,
@@ -1784,16 +1812,16 @@ class AbstractChatCompletionRunner {
                 return;
             const { name, arguments: args } = message.function_call;
             const fn = functionsByName[name];
-            if (!fn || (typeof function_call !== 'string' && name !== function_call?.name)) {
-                this._addMessage({
-                    role: 'function',
-                    name,
-                    content: `Invalid function_call: ${JSON.stringify(name)}. Available options are: ${functions
-                        .map((f) => JSON.stringify(f.name))
-                        .join(', ')}. Please try again`,
-                });
-                if (isSingleFunctionCall)
-                    return;
+            if (!fn) {
+                const content = `Invalid function_call: ${JSON.stringify(name)}. Available options are: ${functions
+                    .map((f) => JSON.stringify(f.name))
+                    .join(', ')}. Please try again`;
+                this._addMessage({ role, name, content });
+                continue;
+            }
+            else if (singleFunctionToCall && singleFunctionToCall !== name) {
+                const content = `Invalid function_call: ${JSON.stringify(name)}. ${JSON.stringify(singleFunctionToCall)} requested. Please try again`;
+                this._addMessage({ role, name, content });
                 continue;
             }
             let parsed;
@@ -1802,41 +1830,121 @@ class AbstractChatCompletionRunner {
             }
             catch (error) {
                 this._addMessage({
-                    role: 'function',
+                    role,
                     name,
                     content: error instanceof Error ? error.message : String(error),
                 });
                 continue;
             }
+            // @ts-expect-error it can't rule out `never` type.
             const rawContent = await fn.function(parsed, this);
-            const content = typeof rawContent === 'string' ? rawContent
-                : rawContent === undefined ? 'undefined'
-                    : JSON.stringify(rawContent);
-            this._addMessage({ role: 'function', name, content });
-            if (isSingleFunctionCall)
+            const content = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_stringifyFunctionCallResult).call(this, rawContent);
+            this._addMessage({ role, name, content });
+            if (singleFunctionToCall)
                 return;
+        }
+    }
+    async _runTools(completions, params, options) {
+        const role = 'tool';
+        const { tool_choice = 'auto', stream, ...restParams } = params;
+        const singleFunctionToCall = typeof tool_choice !== 'string' && tool_choice?.function?.name;
+        const { maxChatCompletions = DEFAULT_MAX_CHAT_COMPLETIONS } = options || {};
+        const functionsByName = {};
+        for (const f of params.tools) {
+            if (f.type === 'function') {
+                functionsByName[f.function.name || f.function.function.name] = f.function;
+            }
+        }
+        const tools = 'tools' in params ?
+            params.tools.map((t) => t.type === 'function' ?
+                {
+                    type: 'function',
+                    function: {
+                        name: t.function.name || t.function.function.name,
+                        parameters: t.function.parameters,
+                        description: t.function.description,
+                    },
+                }
+                : t)
+            : undefined;
+        for (const message of params.messages) {
+            this._addMessage(message, false);
+        }
+        for (let i = 0; i < maxChatCompletions; ++i) {
+            const chatCompletion = await this._createChatCompletion(completions, {
+                ...restParams,
+                tool_choice,
+                tools,
+                messages: [...this.messages],
+            }, options);
+            const message = chatCompletion.choices[0]?.message;
+            if (!message) {
+                throw new error_1.OpenAIError(`missing message in ChatCompletion response`);
+            }
+            if (!message.tool_calls)
+                return;
+            for (const tool_call of message.tool_calls) {
+                if (tool_call.type !== 'function')
+                    continue;
+                const tool_call_id = tool_call.id;
+                const { name, arguments: args } = tool_call.function;
+                const fn = functionsByName[name];
+                if (!fn) {
+                    const content = `Invalid tool_call: ${JSON.stringify(name)}. Available options are: ${tools
+                        .map((f) => JSON.stringify(f.function.name))
+                        .join(', ')}. Please try again`;
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                else if (singleFunctionToCall && singleFunctionToCall !== name) {
+                    const content = `Invalid tool_call: ${JSON.stringify(name)}. ${JSON.stringify(singleFunctionToCall)} requested. Please try again`;
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                let parsed;
+                try {
+                    parsed = (0, RunnableFunction_1.isRunnableFunctionWithParse)(fn) ? await fn.parse(args) : args;
+                }
+                catch (error) {
+                    const content = error instanceof Error ? error.message : String(error);
+                    this._addMessage({ role, tool_call_id, content });
+                    continue;
+                }
+                // @ts-expect-error it can't rule out `never` type.
+                const rawContent = await fn.function(parsed, this);
+                const content = __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_stringifyFunctionCallResult).call(this, rawContent);
+                this._addMessage({ role, tool_call_id, content });
+                if (singleFunctionToCall)
+                    return;
+            }
         }
     }
 }
 exports.AbstractChatCompletionRunner = AbstractChatCompletionRunner;
 _AbstractChatCompletionRunner_connectedPromise = new WeakMap(), _AbstractChatCompletionRunner_resolveConnectedPromise = new WeakMap(), _AbstractChatCompletionRunner_rejectConnectedPromise = new WeakMap(), _AbstractChatCompletionRunner_endPromise = new WeakMap(), _AbstractChatCompletionRunner_resolveEndPromise = new WeakMap(), _AbstractChatCompletionRunner_rejectEndPromise = new WeakMap(), _AbstractChatCompletionRunner_listeners = new WeakMap(), _AbstractChatCompletionRunner_ended = new WeakMap(), _AbstractChatCompletionRunner_errored = new WeakMap(), _AbstractChatCompletionRunner_aborted = new WeakMap(), _AbstractChatCompletionRunner_catchingPromiseCreated = new WeakMap(), _AbstractChatCompletionRunner_handleError = new WeakMap(), _AbstractChatCompletionRunner_instances = new WeakSet(), _AbstractChatCompletionRunner_getFinalContent = function _AbstractChatCompletionRunner_getFinalContent() {
-    for (let i = this.messages.length - 1; i >= 0; i--) {
+    return __classPrivateFieldGet(this, _AbstractChatCompletionRunner_instances, "m", _AbstractChatCompletionRunner_getFinalMessage).call(this).content;
+}, _AbstractChatCompletionRunner_getFinalMessage = function _AbstractChatCompletionRunner_getFinalMessage() {
+    let i = this.messages.length;
+    while (i-- > 0) {
         const message = this.messages[i];
-        if (message?.role === 'assistant')
-            return message.content;
+        if ((0, chatCompletionUtils_1.isAssistantMessage)(message)) {
+            return message;
+        }
     }
-    return null;
+    throw new error_1.OpenAIError('stream ended without producing a ChatCompletionMessage with role=assistant');
 }, _AbstractChatCompletionRunner_getFinalFunctionCall = function _AbstractChatCompletionRunner_getFinalFunctionCall() {
     for (let i = this.messages.length - 1; i >= 0; i--) {
         const message = this.messages[i];
-        if (message?.function_call)
+        if ((0, chatCompletionUtils_1.isAssistantMessage)(message) && message?.function_call) {
             return message.function_call;
+        }
     }
 }, _AbstractChatCompletionRunner_getFinalFunctionCallResult = function _AbstractChatCompletionRunner_getFinalFunctionCallResult() {
     for (let i = this.messages.length - 1; i >= 0; i--) {
         const message = this.messages[i];
-        if (message?.role === 'function' && message.content != null)
+        if ((0, chatCompletionUtils_1.isFunctionMessage)(message) && message.content != null) {
             return message.content;
+        }
     }
 }, _AbstractChatCompletionRunner_calculateTotalUsage = function _AbstractChatCompletionRunner_calculateTotalUsage() {
     const total = {
@@ -1852,29 +1960,43 @@ _AbstractChatCompletionRunner_connectedPromise = new WeakMap(), _AbstractChatCom
         }
     }
     return total;
+}, _AbstractChatCompletionRunner_validateParams = function _AbstractChatCompletionRunner_validateParams(params) {
+    if (params.n != null && params.n > 1) {
+        throw new error_1.OpenAIError('ChatCompletion convenience helpers only support n=1 at this time. To use n>1, please use chat.completions.create() directly.');
+    }
+}, _AbstractChatCompletionRunner_stringifyFunctionCallResult = function _AbstractChatCompletionRunner_stringifyFunctionCallResult(rawContent) {
+    return (typeof rawContent === 'string' ? rawContent
+        : rawContent === undefined ? 'undefined'
+            : JSON.stringify(rawContent));
 };
 
-},{"./RunnableFunction.js":14,"openai/error":8}],11:[function(require,module,exports){
+},{"./RunnableFunction.js":14,"./chatCompletionUtils.js":15,"openai/error":8}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatCompletionRunner = void 0;
 const AbstractChatCompletionRunner_1 = require("./AbstractChatCompletionRunner.js");
+const chatCompletionUtils_1 = require("./chatCompletionUtils.js");
 class ChatCompletionRunner extends AbstractChatCompletionRunner_1.AbstractChatCompletionRunner {
     static runFunctions(completions, params, options) {
         const runner = new ChatCompletionRunner();
         runner._run(() => runner._runFunctions(completions, params, options));
         return runner;
     }
+    static runTools(completions, params, options) {
+        const runner = new ChatCompletionRunner();
+        runner._run(() => runner._runTools(completions, params, options));
+        return runner;
+    }
     _addMessage(message) {
         super._addMessage(message);
-        if (message.role === 'assistant' && message.content) {
+        if ((0, chatCompletionUtils_1.isAssistantMessage)(message) && message.content) {
             this._emit('content', message.content);
         }
     }
 }
 exports.ChatCompletionRunner = ChatCompletionRunner;
 
-},{"./AbstractChatCompletionRunner.js":10}],12:[function(require,module,exports){
+},{"./AbstractChatCompletionRunner.js":10,"./chatCompletionUtils.js":15}],12:[function(require,module,exports){
 "use strict";
 var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
@@ -1970,7 +2092,7 @@ class ChatCompletionStream extends AbstractChatCompletionRunner_1.AbstractChatCo
             return;
         const completion = __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_accumulateChatCompletion).call(this, chunk);
         this._emit('chunk', chunk, completion);
-        const delta = chunk.choices[0]?.delta.content;
+        const delta = chunk.choices[0]?.delta?.content;
         const snapshot = completion.choices[0]?.message;
         if (delta != null && snapshot?.role === 'assistant' && snapshot?.content) {
             this._emit('content', delta, snapshot.content);
@@ -1986,36 +2108,62 @@ class ChatCompletionStream extends AbstractChatCompletionRunner_1.AbstractChatCo
         __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, undefined, "f");
         return finalizeChatCompletion(snapshot);
     }, _ChatCompletionStream_accumulateChatCompletion = function _ChatCompletionStream_accumulateChatCompletion(chunk) {
+        var _a, _b;
         let snapshot = __classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f");
+        const { choices, ...rest } = chunk;
         if (!snapshot) {
-            const { choices, ...rest } = chunk;
-            __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, snapshot = {
+            snapshot = __classPrivateFieldSet(this, _ChatCompletionStream_currentChatCompletionSnapshot, {
                 ...rest,
                 choices: [],
             }, "f");
         }
-        for (const { delta, finish_reason, index } of chunk.choices) {
+        else {
+            Object.assign(snapshot, rest);
+        }
+        for (const { delta, finish_reason, index, ...other } of chunk.choices) {
             let choice = snapshot.choices[index];
-            if (!choice)
-                snapshot.choices[index] = choice = { finish_reason, index, message: delta };
-            else {
-                if (finish_reason)
-                    choice.finish_reason = finish_reason;
-                const { content, function_call, role } = delta;
-                if (content)
-                    choice.message.content = (choice.message.content || '') + content;
-                if (role)
-                    choice.message.role = role;
-                if (function_call) {
-                    if (!choice.message.function_call)
-                        choice.message.function_call = function_call;
-                    else {
-                        if (function_call.arguments)
-                            choice.message.function_call.arguments =
-                                (choice.message.function_call.arguments || '') + function_call.arguments;
-                        if (function_call.name)
-                            choice.message.function_call.name = function_call.name;
+            if (!choice) {
+                snapshot.choices[index] = { finish_reason, index, message: delta, ...other };
+                continue;
+            }
+            if (finish_reason)
+                choice.finish_reason = finish_reason;
+            Object.assign(choice, other);
+            if (!delta)
+                continue; // Shouldn't happen; just in case.
+            const { content, function_call, role, tool_calls } = delta;
+            if (content)
+                choice.message.content = (choice.message.content || '') + content;
+            if (role)
+                choice.message.role = role;
+            if (function_call) {
+                if (!choice.message.function_call) {
+                    choice.message.function_call = function_call;
+                }
+                else {
+                    if (function_call.name)
+                        choice.message.function_call.name = function_call.name;
+                    if (function_call.arguments) {
+                        (_a = choice.message.function_call).arguments ?? (_a.arguments = '');
+                        choice.message.function_call.arguments += function_call.arguments;
                     }
+                }
+            }
+            if (tool_calls) {
+                if (!choice.message.tool_calls)
+                    choice.message.tool_calls = [];
+                for (const { index, id, type, function: fn } of tool_calls) {
+                    const tool_call = ((_b = choice.message.tool_calls)[index] ?? (_b[index] = {}));
+                    if (id)
+                        tool_call.id = id;
+                    if (type)
+                        tool_call.type = type;
+                    if (fn)
+                        tool_call.function ?? (tool_call.function = { arguments: '' });
+                    if (fn?.name)
+                        tool_call.function.name = fn.name;
+                    if (fn?.arguments)
+                        tool_call.function.arguments += fn.arguments;
                 }
             }
         }
@@ -2066,7 +2214,8 @@ function finalizeChatCompletion(snapshot) {
         choices: choices.map(({ message, finish_reason, index }) => {
             if (!finish_reason)
                 throw new error_1.OpenAIError(`missing finish_reason for choice ${index}`);
-            const { content = null, function_call, role } = message;
+            const { content = null, function_call, tool_calls } = message;
+            const role = message.role; // this is what we expect; in theory it could be different which would make our types a slight lie but would be fine.
             if (!role)
                 throw new error_1.OpenAIError(`missing role for choice ${index}`);
             if (function_call) {
@@ -2077,6 +2226,29 @@ function finalizeChatCompletion(snapshot) {
                     throw new error_1.OpenAIError(`missing function_call.name for choice ${index}`);
                 return { message: { content, function_call: { arguments: args, name }, role }, finish_reason, index };
             }
+            if (tool_calls) {
+                return {
+                    index,
+                    finish_reason,
+                    message: {
+                        role,
+                        content,
+                        tool_calls: tool_calls.map((tool_call, i) => {
+                            const { function: fn, type, id } = tool_call;
+                            const { arguments: args, name } = fn || {};
+                            if (id == null)
+                                throw new error_1.OpenAIError(`missing choices[${index}].tool_calls[${i}].id\n${str(snapshot)}`);
+                            if (type == null)
+                                throw new error_1.OpenAIError(`missing choices[${index}].tool_calls[${i}].type\n${str(snapshot)}`);
+                            if (name == null)
+                                throw new error_1.OpenAIError(`missing choices[${index}].tool_calls[${i}].function.name\n${str(snapshot)}`);
+                            if (args == null)
+                                throw new error_1.OpenAIError(`missing choices[${index}].tool_calls[${i}].function.arguments\n${str(snapshot)}`);
+                            return { id, type, function: { name, arguments: args } };
+                        }),
+                    },
+                };
+            }
             return { message: { content: content, role }, finish_reason, index };
         }),
         created,
@@ -2084,8 +2256,11 @@ function finalizeChatCompletion(snapshot) {
         object: 'chat.completion',
     };
 }
+function str(x) {
+    return JSON.stringify(x);
+}
 
-},{"./AbstractChatCompletionRunner.js":10,"openai/error":8,"openai/streaming":37}],13:[function(require,module,exports){
+},{"./AbstractChatCompletionRunner.js":10,"openai/error":8,"openai/streaming":46}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatCompletionStreamingRunner = void 0;
@@ -2099,6 +2274,11 @@ class ChatCompletionStreamingRunner extends ChatCompletionStream_1.ChatCompletio
     static runFunctions(completions, params, options) {
         const runner = new ChatCompletionStreamingRunner();
         runner._run(() => runner._runFunctions(completions, params, options));
+        return runner;
+    }
+    static runTools(completions, params, options) {
+        const runner = new ChatCompletionStreamingRunner();
+        runner._run(() => runner._runTools(completions, params, options));
         return runner;
     }
 }
@@ -2128,6 +2308,27 @@ class ParsingFunction {
 exports.ParsingFunction = ParsingFunction;
 
 },{}],15:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isPresent = exports.isToolMessage = exports.isFunctionMessage = exports.isAssistantMessage = void 0;
+const isAssistantMessage = (message) => {
+    return message?.role === 'assistant';
+};
+exports.isAssistantMessage = isAssistantMessage;
+const isFunctionMessage = (message) => {
+    return message?.role === 'function';
+};
+exports.isFunctionMessage = isFunctionMessage;
+const isToolMessage = (message) => {
+    return message?.role === 'tool';
+};
+exports.isToolMessage = isToolMessage;
+function isPresent(obj) {
+    return obj != null;
+}
+exports.isPresent = isPresent;
+
+},{}],16:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2190,7 +2391,7 @@ class CursorPage extends core_1.AbstractPage {
 }
 exports.CursorPage = CursorPage;
 
-},{"./core.js":7}],16:[function(require,module,exports){
+},{"./core.js":7}],17:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2208,7 +2409,7 @@ class APIResource {
 }
 exports.APIResource = APIResource;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2237,6 +2438,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Audio = void 0;
 const resource_1 = require("openai/resource");
+const SpeechAPI = __importStar(require("openai/resources/audio/speech"));
 const TranscriptionsAPI = __importStar(require("openai/resources/audio/transcriptions"));
 const TranslationsAPI = __importStar(require("openai/resources/audio/translations"));
 class Audio extends resource_1.APIResource {
@@ -2244,15 +2446,35 @@ class Audio extends resource_1.APIResource {
         super(...arguments);
         this.transcriptions = new TranscriptionsAPI.Transcriptions(this.client);
         this.translations = new TranslationsAPI.Translations(this.client);
+        this.speech = new SpeechAPI.Speech(this.client);
     }
 }
 exports.Audio = Audio;
 (function (Audio) {
     Audio.Transcriptions = TranscriptionsAPI.Transcriptions;
     Audio.Translations = TranslationsAPI.Translations;
+    Audio.Speech = SpeechAPI.Speech;
 })(Audio = exports.Audio || (exports.Audio = {}));
 
-},{"openai/resource":16,"openai/resources/audio/transcriptions":18,"openai/resources/audio/translations":19}],18:[function(require,module,exports){
+},{"openai/resource":17,"openai/resources/audio/speech":19,"openai/resources/audio/transcriptions":20,"openai/resources/audio/translations":21}],19:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Speech = void 0;
+const resource_1 = require("openai/resource");
+class Speech extends resource_1.APIResource {
+    /**
+     * Generates audio from the input text.
+     */
+    create(body, options) {
+        return this.post('/audio/speech', { body, ...options, __binaryResponse: true });
+    }
+}
+exports.Speech = Speech;
+(function (Speech) {
+})(Speech = exports.Speech || (exports.Speech = {}));
+
+},{"openai/resource":17}],20:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2271,7 +2493,7 @@ exports.Transcriptions = Transcriptions;
 (function (Transcriptions) {
 })(Transcriptions = exports.Transcriptions || (exports.Transcriptions = {}));
 
-},{"openai/core":7,"openai/resource":16}],19:[function(require,module,exports){
+},{"openai/core":7,"openai/resource":17}],21:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2290,7 +2512,186 @@ exports.Translations = Translations;
 (function (Translations) {
 })(Translations = exports.Translations || (exports.Translations = {}));
 
-},{"openai/core":7,"openai/resource":16}],20:[function(require,module,exports){
+},{"openai/core":7,"openai/resource":17}],22:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AssistantsPage = exports.Assistants = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const AssistantsAPI = __importStar(require("openai/resources/beta/assistants/assistants"));
+const FilesAPI = __importStar(require("openai/resources/beta/assistants/files"));
+const pagination_1 = require("openai/pagination");
+class Assistants extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.files = new FilesAPI.Files(this.client);
+    }
+    /**
+     * Create an assistant with a model and instructions.
+     */
+    create(body, options) {
+        return this.post('/assistants', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves an assistant.
+     */
+    retrieve(assistantId, options) {
+        return this.get(`/assistants/${assistantId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies an assistant.
+     */
+    update(assistantId, body, options) {
+        return this.post(`/assistants/${assistantId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this.getAPIList('/assistants', AssistantsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Delete an assistant.
+     */
+    del(assistantId, options) {
+        return this.delete(`/assistants/${assistantId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Assistants = Assistants;
+class AssistantsPage extends pagination_1.CursorPage {
+}
+exports.AssistantsPage = AssistantsPage;
+(function (Assistants) {
+    Assistants.AssistantsPage = AssistantsAPI.AssistantsPage;
+    Assistants.Files = FilesAPI.Files;
+    Assistants.AssistantFilesPage = FilesAPI.AssistantFilesPage;
+})(Assistants = exports.Assistants || (exports.Assistants = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/assistants/assistants":22,"openai/resources/beta/assistants/files":23}],23:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AssistantFilesPage = exports.Files = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const FilesAPI = __importStar(require("openai/resources/beta/assistants/files"));
+const pagination_1 = require("openai/pagination");
+class Files extends resource_1.APIResource {
+    /**
+     * Create an assistant file by attaching a
+     * [File](https://platform.openai.com/docs/api-reference/files) to an
+     * [assistant](https://platform.openai.com/docs/api-reference/assistants).
+     */
+    create(assistantId, body, options) {
+        return this.post(`/assistants/${assistantId}/files`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves an AssistantFile.
+     */
+    retrieve(assistantId, fileId, options) {
+        return this.get(`/assistants/${assistantId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(assistantId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(assistantId, {}, query);
+        }
+        return this.getAPIList(`/assistants/${assistantId}/files`, AssistantFilesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Delete an assistant file.
+     */
+    del(assistantId, fileId, options) {
+        return this.delete(`/assistants/${assistantId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Files = Files;
+class AssistantFilesPage extends pagination_1.CursorPage {
+}
+exports.AssistantFilesPage = AssistantFilesPage;
+(function (Files) {
+    Files.AssistantFilesPage = FilesAPI.AssistantFilesPage;
+})(Files = exports.Files || (exports.Files = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/assistants/files":23}],24:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2319,19 +2720,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Beta = void 0;
 const resource_1 = require("openai/resource");
+const AssistantsAPI = __importStar(require("openai/resources/beta/assistants/assistants"));
 const ChatAPI = __importStar(require("openai/resources/beta/chat/chat"));
+const ThreadsAPI = __importStar(require("openai/resources/beta/threads/threads"));
 class Beta extends resource_1.APIResource {
     constructor() {
         super(...arguments);
         this.chat = new ChatAPI.Chat(this.client);
+        this.assistants = new AssistantsAPI.Assistants(this.client);
+        this.threads = new ThreadsAPI.Threads(this.client);
     }
 }
 exports.Beta = Beta;
 (function (Beta) {
     Beta.Chat = ChatAPI.Chat;
+    Beta.Assistants = AssistantsAPI.Assistants;
+    Beta.AssistantsPage = AssistantsAPI.AssistantsPage;
+    Beta.Threads = ThreadsAPI.Threads;
 })(Beta = exports.Beta || (exports.Beta = {}));
 
-},{"openai/resource":16,"openai/resources/beta/chat/chat":21}],21:[function(require,module,exports){
+},{"openai/resource":17,"openai/resources/beta/assistants/assistants":22,"openai/resources/beta/chat/chat":25,"openai/resources/beta/threads/threads":31}],25:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2372,7 +2780,7 @@ exports.Chat = Chat;
     Chat.Completions = CompletionsAPI.Completions;
 })(Chat = exports.Chat || (exports.Chat = {}));
 
-},{"openai/resource":16,"openai/resources/beta/chat/completions":22}],22:[function(require,module,exports){
+},{"openai/resource":17,"openai/resources/beta/chat/completions":26}],26:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2396,6 +2804,12 @@ class Completions extends resource_1.APIResource {
         }
         return ChatCompletionRunner_1.ChatCompletionRunner.runFunctions(this.client.chat.completions, body, options);
     }
+    runTools(body, options) {
+        if (body.stream) {
+            return ChatCompletionStreamingRunner_1.ChatCompletionStreamingRunner.runTools(this.client.chat.completions, body, options);
+        }
+        return ChatCompletionRunner_1.ChatCompletionRunner.runTools(this.client.chat.completions, body, options);
+    }
     /**
      * Creates a chat completion stream
      */
@@ -2405,7 +2819,421 @@ class Completions extends resource_1.APIResource {
 }
 exports.Completions = Completions;
 
-},{"openai/lib/ChatCompletionRunner":11,"openai/lib/ChatCompletionStream":12,"openai/lib/ChatCompletionStreamingRunner":13,"openai/lib/RunnableFunction":14,"openai/resource":16}],23:[function(require,module,exports){
+},{"openai/lib/ChatCompletionRunner":11,"openai/lib/ChatCompletionStream":12,"openai/lib/ChatCompletionStreamingRunner":13,"openai/lib/RunnableFunction":14,"openai/resource":17}],27:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MessageFilesPage = exports.Files = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const FilesAPI = __importStar(require("openai/resources/beta/threads/messages/files"));
+const pagination_1 = require("openai/pagination");
+class Files extends resource_1.APIResource {
+    /**
+     * Retrieves a message file.
+     */
+    retrieve(threadId, messageId, fileId, options) {
+        return this.get(`/threads/${threadId}/messages/${messageId}/files/${fileId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(threadId, messageId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(threadId, messageId, {}, query);
+        }
+        return this.getAPIList(`/threads/${threadId}/messages/${messageId}/files`, MessageFilesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Files = Files;
+class MessageFilesPage extends pagination_1.CursorPage {
+}
+exports.MessageFilesPage = MessageFilesPage;
+(function (Files) {
+    Files.MessageFilesPage = FilesAPI.MessageFilesPage;
+})(Files = exports.Files || (exports.Files = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/threads/messages/files":27}],28:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ThreadMessagesPage = exports.Messages = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const MessagesAPI = __importStar(require("openai/resources/beta/threads/messages/messages"));
+const FilesAPI = __importStar(require("openai/resources/beta/threads/messages/files"));
+const pagination_1 = require("openai/pagination");
+class Messages extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.files = new FilesAPI.Files(this.client);
+    }
+    /**
+     * Create a message.
+     */
+    create(threadId, body, options) {
+        return this.post(`/threads/${threadId}/messages`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieve a message.
+     */
+    retrieve(threadId, messageId, options) {
+        return this.get(`/threads/${threadId}/messages/${messageId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a message.
+     */
+    update(threadId, messageId, body, options) {
+        return this.post(`/threads/${threadId}/messages/${messageId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(threadId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(threadId, {}, query);
+        }
+        return this.getAPIList(`/threads/${threadId}/messages`, ThreadMessagesPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Messages = Messages;
+class ThreadMessagesPage extends pagination_1.CursorPage {
+}
+exports.ThreadMessagesPage = ThreadMessagesPage;
+(function (Messages) {
+    Messages.ThreadMessagesPage = MessagesAPI.ThreadMessagesPage;
+    Messages.Files = FilesAPI.Files;
+    Messages.MessageFilesPage = FilesAPI.MessageFilesPage;
+})(Messages = exports.Messages || (exports.Messages = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/threads/messages/files":27,"openai/resources/beta/threads/messages/messages":28}],29:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RunsPage = exports.Runs = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const RunsAPI = __importStar(require("openai/resources/beta/threads/runs/runs"));
+const StepsAPI = __importStar(require("openai/resources/beta/threads/runs/steps"));
+const pagination_1 = require("openai/pagination");
+class Runs extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.steps = new StepsAPI.Steps(this.client);
+    }
+    /**
+     * Create a run.
+     */
+    create(threadId, body, options) {
+        return this.post(`/threads/${threadId}/runs`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a run.
+     */
+    retrieve(threadId, runId, options) {
+        return this.get(`/threads/${threadId}/runs/${runId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a run.
+     */
+    update(threadId, runId, body, options) {
+        return this.post(`/threads/${threadId}/runs/${runId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(threadId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(threadId, {}, query);
+        }
+        return this.getAPIList(`/threads/${threadId}/runs`, RunsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Cancels a run that is `in_progress`.
+     */
+    cancel(threadId, runId, options) {
+        return this.post(`/threads/${threadId}/runs/${runId}/cancel`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * When a run has the `status: "requires_action"` and `required_action.type` is
+     * `submit_tool_outputs`, this endpoint can be used to submit the outputs from the
+     * tool calls once they're all completed. All outputs must be submitted in a single
+     * request.
+     */
+    submitToolOutputs(threadId, runId, body, options) {
+        return this.post(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Runs = Runs;
+class RunsPage extends pagination_1.CursorPage {
+}
+exports.RunsPage = RunsPage;
+(function (Runs) {
+    Runs.RunsPage = RunsAPI.RunsPage;
+    Runs.Steps = StepsAPI.Steps;
+    Runs.RunStepsPage = StepsAPI.RunStepsPage;
+})(Runs = exports.Runs || (exports.Runs = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/threads/runs/runs":29,"openai/resources/beta/threads/runs/steps":30}],30:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RunStepsPage = exports.Steps = void 0;
+const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
+const StepsAPI = __importStar(require("openai/resources/beta/threads/runs/steps"));
+const pagination_1 = require("openai/pagination");
+class Steps extends resource_1.APIResource {
+    /**
+     * Retrieves a run step.
+     */
+    retrieve(threadId, runId, stepId, options) {
+        return this.get(`/threads/${threadId}/runs/${runId}/steps/${stepId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    list(threadId, runId, query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list(threadId, runId, {}, query);
+        }
+        return this.getAPIList(`/threads/${threadId}/runs/${runId}/steps`, RunStepsPage, {
+            query,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Steps = Steps;
+class RunStepsPage extends pagination_1.CursorPage {
+}
+exports.RunStepsPage = RunStepsPage;
+(function (Steps) {
+    Steps.RunStepsPage = StepsAPI.RunStepsPage;
+})(Steps = exports.Steps || (exports.Steps = {}));
+
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/beta/threads/runs/steps":30}],31:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Threads = void 0;
+const resource_1 = require("openai/resource");
+const MessagesAPI = __importStar(require("openai/resources/beta/threads/messages/messages"));
+const RunsAPI = __importStar(require("openai/resources/beta/threads/runs/runs"));
+class Threads extends resource_1.APIResource {
+    constructor() {
+        super(...arguments);
+        this.runs = new RunsAPI.Runs(this.client);
+        this.messages = new MessagesAPI.Messages(this.client);
+    }
+    /**
+     * Create a thread.
+     */
+    create(body, options) {
+        return this.post('/threads', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Retrieves a thread.
+     */
+    retrieve(threadId, options) {
+        return this.get(`/threads/${threadId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Modifies a thread.
+     */
+    update(threadId, body, options) {
+        return this.post(`/threads/${threadId}`, {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Delete a thread.
+     */
+    del(threadId, options) {
+        return this.delete(`/threads/${threadId}`, {
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+    /**
+     * Create a thread and run it in one request.
+     */
+    createAndRun(body, options) {
+        return this.post('/threads/runs', {
+            body,
+            ...options,
+            headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
+        });
+    }
+}
+exports.Threads = Threads;
+(function (Threads) {
+    Threads.Runs = RunsAPI.Runs;
+    Threads.RunsPage = RunsAPI.RunsPage;
+    Threads.Messages = MessagesAPI.Messages;
+    Threads.ThreadMessagesPage = MessagesAPI.ThreadMessagesPage;
+})(Threads = exports.Threads || (exports.Threads = {}));
+
+},{"openai/resource":17,"openai/resources/beta/threads/messages/messages":28,"openai/resources/beta/threads/runs/runs":29}],32:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2446,7 +3274,7 @@ exports.Chat = Chat;
     Chat.Completions = CompletionsAPI.Completions;
 })(Chat = exports.Chat || (exports.Chat = {}));
 
-},{"openai/resource":16,"openai/resources/chat/completions":24}],24:[function(require,module,exports){
+},{"openai/resource":17,"openai/resources/chat/completions":33}],33:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2461,7 +3289,7 @@ exports.Completions = Completions;
 (function (Completions) {
 })(Completions = exports.Completions || (exports.Completions = {}));
 
-},{"openai/resource":16}],25:[function(require,module,exports){
+},{"openai/resource":17}],34:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2471,7 +3299,7 @@ Object.defineProperty(exports, "Chat", { enumerable: true, get: function () { re
 var completions_1 = require("./completions.js");
 Object.defineProperty(exports, "Completions", { enumerable: true, get: function () { return completions_1.Completions; } });
 
-},{"./chat.js":23,"./completions.js":24}],26:[function(require,module,exports){
+},{"./chat.js":32,"./completions.js":33}],35:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2486,7 +3314,7 @@ exports.Completions = Completions;
 (function (Completions) {
 })(Completions = exports.Completions || (exports.Completions = {}));
 
-},{"openai/resource":16}],27:[function(require,module,exports){
+},{"openai/resource":17}],36:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2508,7 +3336,7 @@ exports.Edits = Edits;
 (function (Edits) {
 })(Edits = exports.Edits || (exports.Edits = {}));
 
-},{"openai/resource":16}],28:[function(require,module,exports){
+},{"openai/resource":17}],37:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2526,7 +3354,7 @@ exports.Embeddings = Embeddings;
 (function (Embeddings) {
 })(Embeddings = exports.Embeddings || (exports.Embeddings = {}));
 
-},{"openai/resource":16}],29:[function(require,module,exports){
+},{"openai/resource":17}],38:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2556,19 +3384,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileObjectsPage = exports.Files = void 0;
 const resource_1 = require("openai/resource");
 const core_1 = require("openai/core");
+const core_2 = require("openai/core");
 const error_1 = require("openai/error");
 const FilesAPI = __importStar(require("openai/resources/files"));
-const core_2 = require("openai/core");
+const core_3 = require("openai/core");
 const pagination_1 = require("openai/pagination");
 class Files extends resource_1.APIResource {
     /**
-     * Upload a file that can be used across various endpoints/features. Currently, the
-     * size of all the files uploaded by one organization can be up to 1 GB. Please
-     * [contact us](https://help.openai.com/) if you need to increase the storage
-     * limit.
+     * Upload a file that can be used across various endpoints/features. The size of
+     * all the files uploaded by one organization can be up to 100 GB.
+     *
+     * The size of individual files for can be a maximum of 512MB. See the
+     * [Assistants Tools guide](https://platform.openai.com/docs/assistants/tools) to
+     * learn more about the types of files supported. The Fine-tuning API only supports
+     * `.jsonl` files.
+     *
+     * Please [contact us](https://help.openai.com/) if you need to increase these
+     * storage limits.
      */
     create(body, options) {
-        return this.post('/files', (0, core_2.multipartFormRequestOptions)({ body, ...options }));
+        return this.post('/files', (0, core_3.multipartFormRequestOptions)({ body, ...options }));
     }
     /**
      * Returns information about a specific file.
@@ -2576,11 +3411,11 @@ class Files extends resource_1.APIResource {
     retrieve(fileId, options) {
         return this.get(`/files/${fileId}`, options);
     }
-    /**
-     * Returns a list of files that belong to the user's organization.
-     */
-    list(options) {
-        return this.getAPIList('/files', FileObjectsPage, options);
+    list(query = {}, options) {
+        if ((0, core_1.isRequestOptions)(query)) {
+            return this.list({}, query);
+        }
+        return this.getAPIList('/files', FileObjectsPage, { query, ...options });
     }
     /**
      * Delete a file.
@@ -2605,7 +3440,7 @@ class Files extends resource_1.APIResource {
         const start = Date.now();
         let file = await this.retrieve(id);
         while (!file.status || !TERMINAL_STATES.has(file.status)) {
-            await (0, core_1.sleep)(pollInterval);
+            await (0, core_2.sleep)(pollInterval);
             file = await this.retrieve(id);
             if (Date.now() - start > maxWait) {
                 throw new error_1.APIConnectionTimeoutError({
@@ -2627,7 +3462,7 @@ exports.FileObjectsPage = FileObjectsPage;
     Files.FileObjectsPage = FilesAPI.FileObjectsPage;
 })(Files = exports.Files || (exports.Files = {}));
 
-},{"openai/core":7,"openai/error":8,"openai/pagination":15,"openai/resource":16,"openai/resources/files":29}],30:[function(require,module,exports){
+},{"openai/core":7,"openai/error":8,"openai/pagination":16,"openai/resource":17,"openai/resources/files":38}],39:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2710,7 +3545,7 @@ exports.FineTunesPage = FineTunesPage;
     FineTunes.FineTunesPage = FineTunesAPI.FineTunesPage;
 })(FineTunes = exports.FineTunes || (exports.FineTunes = {}));
 
-},{"openai/pagination":15,"openai/resource":16,"openai/resources/fine-tunes":30}],31:[function(require,module,exports){
+},{"openai/pagination":16,"openai/resource":17,"openai/resources/fine-tunes":39}],40:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2753,7 +3588,7 @@ exports.FineTuning = FineTuning;
     FineTuning.FineTuningJobEventsPage = JobsAPI.FineTuningJobEventsPage;
 })(FineTuning = exports.FineTuning || (exports.FineTuning = {}));
 
-},{"openai/resource":16,"openai/resources/fine-tuning/jobs":32}],32:[function(require,module,exports){
+},{"openai/resource":17,"openai/resources/fine-tuning/jobs":41}],41:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2839,7 +3674,7 @@ exports.FineTuningJobEventsPage = FineTuningJobEventsPage;
     Jobs.FineTuningJobEventsPage = JobsAPI.FineTuningJobEventsPage;
 })(Jobs = exports.Jobs || (exports.Jobs = {}));
 
-},{"openai/core":7,"openai/pagination":15,"openai/resource":16,"openai/resources/fine-tuning/jobs":32}],33:[function(require,module,exports){
+},{"openai/core":7,"openai/pagination":16,"openai/resource":17,"openai/resources/fine-tuning/jobs":41}],42:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2870,7 +3705,7 @@ exports.Images = Images;
 (function (Images) {
 })(Images = exports.Images || (exports.Images = {}));
 
-},{"openai/core":7,"openai/resource":16}],34:[function(require,module,exports){
+},{"openai/core":7,"openai/resource":17}],43:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2916,7 +3751,7 @@ Object.defineProperty(exports, "Models", { enumerable: true, get: function () { 
 var moderations_1 = require("./moderations.js");
 Object.defineProperty(exports, "Moderations", { enumerable: true, get: function () { return moderations_1.Moderations; } });
 
-},{"./audio/audio.js":17,"./beta/beta.js":20,"./chat/index.js":25,"./completions.js":26,"./edits.js":27,"./embeddings.js":28,"./files.js":29,"./fine-tunes.js":30,"./fine-tuning/fine-tuning.js":31,"./images.js":33,"./models.js":35,"./moderations.js":36}],35:[function(require,module,exports){
+},{"./audio/audio.js":18,"./beta/beta.js":24,"./chat/index.js":34,"./completions.js":35,"./edits.js":36,"./embeddings.js":37,"./files.js":38,"./fine-tunes.js":39,"./fine-tuning/fine-tuning.js":40,"./images.js":42,"./models.js":44,"./moderations.js":45}],44:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -2981,7 +3816,7 @@ exports.ModelsPage = ModelsPage;
     Models.ModelsPage = ModelsAPI.ModelsPage;
 })(Models = exports.Models || (exports.Models = {}));
 
-},{"openai/pagination":15,"openai/resource":16,"openai/resources/models":35}],36:[function(require,module,exports){
+},{"openai/pagination":16,"openai/resource":17,"openai/resources/models":44}],45:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2999,7 +3834,7 @@ exports.Moderations = Moderations;
 (function (Moderations) {
 })(Moderations = exports.Moderations || (exports.Moderations = {}));
 
-},{"openai/resource":16}],37:[function(require,module,exports){
+},{"openai/resource":17}],46:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3349,7 +4184,7 @@ function readableStreamAsyncIterable(stream) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./_shims/index.js":4,"./error.js":8,"buffer":41,"openai/error":8}],38:[function(require,module,exports){
+},{"./_shims/index.js":4,"./error.js":8,"buffer":50,"openai/error":8}],47:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3514,13 +4349,13 @@ const addFormValue = async (form, key, value) => {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./_shims/index.js":4,"buffer":41}],39:[function(require,module,exports){
+},{"./_shims/index.js":4,"buffer":50}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VERSION = void 0;
-exports.VERSION = '4.15.4'; // x-release-please-version
+exports.VERSION = '4.16.1'; // x-release-please-version
 
-},{}],40:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3672,7 +4507,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],41:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -5453,7 +6288,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":40,"buffer":41,"ieee754":42}],42:[function(require,module,exports){
+},{"base64-js":49,"buffer":50,"ieee754":51}],51:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -5540,7 +6375,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],43:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

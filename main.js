@@ -77,7 +77,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage("You: " + userMessage);
+		displayMessage("You: " + marked.parse(userMessage));
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
@@ -94,7 +94,7 @@ function initializeApp() {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
 			// Display the assistant's message in the chat log.
-			displayMessage("Jarg: " + assistantResponse);
+			displayMessage("Jarg: " + marked.parse(assistantResponse));
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
