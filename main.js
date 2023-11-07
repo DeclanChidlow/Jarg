@@ -44,7 +44,7 @@ function initializeApp() {
 
 	// Function to display the login interface.
 	function showLoginInterface() {
-		loginDiv.style.display = "block";
+		loginDiv.style.display = "flex";
 	}
 
 	// Function to save the API key to a cookie.

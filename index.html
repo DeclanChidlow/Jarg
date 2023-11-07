@@ -3,19 +3,26 @@
 
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta property="og:site_name" content="Jarg">
+	<meta name="author" content="Declan Chidlow">
 	<title>Jarg</title>
 	<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 	<div id="login">
-		<h1>Jarg</h1>
-		<label for="apiKeyInput">Enter your OpenAI API key:</label>
-		<input type="text" id="apiKeyInput">
-		<button id="saveButton">Save API Key</button>
-		<p>Jarg v1.1.0</br>
-			Built by <a href="https://vale.rocks">Vale</a>. Source code available on <a
-				href="https://github.com/DeclanChidlow/Lingo">Github</a>.</p>
+		<div>
+			<h1>Jarg</h1>
+			<label for="apiKeyInput">Enter your OpenAI API key:</label>
+			</br>
+			<input type="text" id="apiKeyInput">
+			</br>
+			<button id="saveButton">Save API Key</button>
+			</br>
+			<p>Built by <a href="https://vale.rocks">Vale</a>. Source code available on <a
+					href="https://github.com/DeclanChidlow/Lingo">Github</a>.</p>
+		</div>
 	</div>
 
 	<div id="app">
@@ -23,6 +30,7 @@
 			<div id="chat">
 				<div id="chat-log">
 					<div id="messages">
+						<p>Jarg: Ello! I'm Jarg. What can I do for you today?</p>
 						<!-- Chat log will be displayed here -->
 					</div>
 					<div id="loading">Jarg: Give me a sec while I think...</div>
@@ -38,34 +46,36 @@
 			<div id="settings">
 				<h2>Settings</h2>
 				<form>
-					<label for="modelSelect">Select an OpenAI Model:</label>
-					<select id="modelSelect">
-						<optgroup label="GPT 3.5">
-							<option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
-							<option value="gpt-3.5-turbo-16k">GPT 3.5 Turbo - 16k</option>
-							<option value="gpt-3.5-turbo-1106">GPT 3.5 Turbo - Updated</option>
-						</optgroup>
-						<optgroup label="GPT 4">
-							<option value="gpt-4">GPT 4</option>
-							<option value="gpt-4-1106-preview">GPT 4 Turbo</option>
-						</optgroup>
-					</select>
-					</br>
+					<div id="setModel" title="Sets which OpenAI model to use.">
+						<label for="modelSelect">Select an OpenAI model:</label>
+						<select id="modelSelect">
+							<optgroup label="GPT 3.5">
+								<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+								<option value="gpt-3.5-turbo-16k">GPT-3.5 Turbo - 16k</option>
+								<option value="gpt-3.5-turbo-1106">GPT-3.5 Turbo - Updated</option>
+							</optgroup>
+							<optgroup label="GPT 4">
+								<option value="gpt-4">GPT-4</option>
+								<option value="gpt-4-1106-preview">GPT-4 Turbo</option>
+							</optgroup>
+						</select>
+					</div>
 
-					<label for="temperatureInput">Temperature:</label>
-					<input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="0.7">
-					</br>
+					<div id="setTemperature" title="Sets the 'randomness' of the output. Higher means more random.">
+						<label for="temperatureInput">Temperature:</label>
+						<input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="1">
+					</div>
 
-					<label for "maxTokensInput">Max Tokens:</label>
-					<input type="number" id="maxTokensInput" min="0" value="3000">
-					</br>
+					<div id="setMaxTokens" title="Sets the maximum amount of tokens the AI can use.">
+						<label for="maxTokensInput">Max Tokens:</label>
+						<input type="number" id="maxTokensInput" min="0" max="4096" value="3000">
+					</div>
 
 					<input type="reset" value="Reset">
 				</form>
 			</div>
-			<p>Jarg v1.1.1</br>
-				Built by <a href="https://vale.rocks">Vale</a>. Source code available on <a
-					href="https://github.com/DeclanChidlow/Lingo">Github</a>.</p>
+			<code>Jarg v1.1.2</br> Built by <a href="https://vale.rocks">Vale</a>.
+				Source code available on <a href="https://github.com/DeclanChidlow/Lingo">Github</a>.</code>
 		</div>
 	</div>
 
