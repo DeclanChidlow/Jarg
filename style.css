@@ -1,0 +1,89 @@
+@import "https://vale.rocks/style/colours.css";
+
+@import "https://vale.rocks/style/input.css";
+
+@import "https://vale.rocks/style/links.css";
+
+@import "https://vale.rocks/style/type.css";
+
+@import "https://vale.rocks/style/reset.css";
+
+body {
+	background-color: var(--black);
+}
+
+#app {
+	display: none;
+ /* Will be set to flex by JS */
+	height: 100dvh;
+}
+
+#chat-container {
+	flex: 1;
+	padding: 10px;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+#chat {
+	margin: 0 auto;
+	text-align: left;
+	width: 100%;
+	max-width: 60ch;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+#chat-log {
+	flex: 1;
+	overflow-y: scroll;
+}
+
+#messageBox {
+	display: flex;
+}
+
+#messageInput {
+	flex: 1;
+}
+
+#sidebar {
+	display: flex;
+	flex-direction: column;
+	background: var(--dark_grey);
+	max-width: 30%;
+	padding: 10px;
+}
+
+#settings {
+	flex: 1;
+}
+
+/* login */
+
+#login {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 300px;
+	padding: 20px;
+	display: none;
+	text-align: center;
+}
+
+@media (max-width: 700px) {
+#app {
+    flex-direction: column;
+	height: auto;
+}
+
+#sidebar {
+	max-width: inherit;
+}
+
+}

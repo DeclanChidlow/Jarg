@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>Jarg</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<div id="login">
+		<h1>Jarg</h1>
+		<label for="apiKeyInput">Enter your OpenAI API key:</label>
+		<input type="text" id="apiKeyInput">
+		<button id="saveButton">Save API Key</button>
+	</div>
+
+	<div id="app">
+		<div id="chat-container">
+			<div id="chat">
+				<div id="chat-log">
+					<!-- Chat log will be displayed here -->
+				</div>
+				<div id="messageBox">
+					<input type="text" id="messageInput" placeholder="Type your message...">
+					<button id="sendMessageButton">Send</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="sidebar">
+			<div id="settings">
+				<h2>Settings</h2>
+				<label for="modelSelect">Select an OpenAI Model:</label>
+				<select id="modelSelect">
+					<optgroup label="GPT 3.5">
+						<option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
+						<option value="gpt-3.5-turbo-16k">GPT 3.5 Turbo - 16k</option>
+					</optgroup>
+					<optgroup label="GPT 4">
+						<option value="gpt-4">GPT 4</option>
+						<option value="gpt-4-1106-preview">GPT 4 Turbo</option>
+					</optgroup>
+				</select>
+				</br>
+
+				<label for="temperatureInput">Temperature:</label>
+				<input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="0.7">
+				</br>
+
+				<label for "maxTokensInput">Max Tokens:</label>
+				<input type="number" id="maxTokensInput" min="0" value="3000">
+			</div>
+			<p>Jarg v1.0</br>
+				Built by <a href="https://vale.rocks">Vale</a>. Source code available on <a
+					href="https://github.com/DeclanChidlow/Lingo">Github</a>.</p>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="bundle.js"></script>
+</body>
+
+</html>

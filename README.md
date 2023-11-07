@@ -1,14 +1,14 @@
 <h1 align="center">
-  Template Repo
+  Jarg
   
-  [![Stars](https://img.shields.io/github/stars/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/stargazers)
-  [![Forks](https://img.shields.io/github/forks/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/network/members)
-  [![Pull Requests](https://img.shields.io/github/issues-pr/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/pulls)
-  [![Issues](https://img.shields.io/github/issues/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/issues)
-  [![Contributors](https://img.shields.io/github/contributors/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/graphs/contributors)
-  [![Licence](https://img.shields.io/github/license/DeclanChidlow/Template?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Template/blob/main/LICENCE)
+  [![Stars](https://img.shields.io/github/stars/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/stargazers)
+  [![Forks](https://img.shields.io/github/forks/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/network/members)
+  [![Pull Requests](https://img.shields.io/github/issues-pr/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/pulls)
+  [![Issues](https://img.shields.io/github/issues/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/issues)
+  [![Contributors](https://img.shields.io/github/contributors/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/graphs/contributors)
+  [![Licence](https://img.shields.io/github/license/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/blob/main/LICENCE)
 </h1>
 
-A template for my GitHub repositories.
+A frontend to OpenAI's generative pretrained transformers.
 
-![LGPLv3 Badge](/README_RESOURCES/LGPLv3%20Logo.svg)
+To make it work in a browser it bundles the OpenAI npm package into `bundle.js`.
