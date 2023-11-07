@@ -49,6 +49,7 @@ body {
 
 #messageInput {
 	flex: 1;
+	min-height: 2rem;
 }
 
 #sidebar {
@@ -62,6 +63,10 @@ body {
 #settings {
 	flex: 1;
 }
+
+        #loading {
+            display: none;
+        }
 
 /* login */
 
