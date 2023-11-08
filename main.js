@@ -116,7 +116,7 @@ function initializeApp() {
 				{
 					role: "system",
 					content:
-						"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. You should have opinions.",
+						"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. You should have opinions on topics when asked.",
 				},
 				{ role: "user", content: defaultPromptInput.value + userMessage },
 			],
