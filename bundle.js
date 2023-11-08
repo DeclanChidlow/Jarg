@@ -12,6 +12,7 @@ function initializeApp() {
 	const chatLog = document.querySelector("#messages");
 	const temperatureInput = document.querySelector("#temperatureInput");
 	const maxTokensInput = document.querySelector("#maxTokensInput");
+	const defaultPromptInput = document.querySelector("#defaultPromptInput");
 
 	// Elements related to the user interface.
 	const loginDiv = document.querySelector("#login");
@@ -116,9 +117,9 @@ function initializeApp() {
 				{
 					role: "system",
 					content:
-						"From now on, you will be known as Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. As Jarg, you should be friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible and sometimes be somewhat sarcastic and humerous.",
+						"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. You should have opinions.",
 				},
-				{ role: "user", content: userMessage },
+				{ role: "user", content: defaultPromptInput.value + userMessage },
 			],
 			model: selectedModel,
 			temperature: temperature,
