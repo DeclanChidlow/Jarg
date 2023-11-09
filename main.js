@@ -5,18 +5,19 @@ document.addEventListener("DOMContentLoaded", initializeApp);
 // Initialize the application when the DOM content is loaded.
 function initializeApp() {
 	// Retrieve necessary elements from the DOM.
-	const apiKeyInput = document.querySelector("#apiKeyInput");
-	const modelSelect = document.querySelector("#modelSelect");
-	const messageInput = document.querySelector("#messageInput");
-	const chatLog = document.querySelector("#messages");
-	const temperatureInput = document.querySelector("#temperatureInput");
-	const maxTokensInput = document.querySelector("#maxTokensInput");
-	const defaultPromptInput = document.querySelector("#defaultPromptInput");
+	const apiKeyInput = document.querySelector("#apiKeyInput"),
+		modelSelect = document.querySelector("#modelSelect"),
+		messageInput = document.querySelector("#messageInput"),
+		imageInput = document.querySelector("#imageInput"),
+		chatLog = document.querySelector("#messages"),
+		temperatureInput = document.querySelector("#temperatureInput"),
+		maxTokensInput = document.querySelector("#maxTokensInput"),
+		defaultPromptInput = document.querySelector("#defaultPromptInput");
 
 	// Elements related to the user interface.
-	const loginDiv = document.querySelector("#login");
-	const appDiv = document.querySelector("#app");
-	const loadingDiv = document.querySelector("#loading");
+	const loginDiv = document.querySelector("#login"),
+		appDiv = document.querySelector("#app"),
+		loadingDiv = document.querySelector("#loading");
 
 	// Check if the API key is stored in a cookie when the page loads.
 	const storedApiKey = getCookie("openaiApiKey");
@@ -62,6 +63,21 @@ function initializeApp() {
 		showAppInterface();
 	}
 
+	// Attach event listener to modelSelect for model change
+	modelSelect.addEventListener("change", handleModelChange);
+
+	// Function to handle model change
+	function handleModelChange() {
+		// Check if the selected model is "gpt-4-vision-preview"
+		if (modelSelect.value === "gpt-4-vision-preview") {
+			// Show the div related to gpt-4-vision-preview
+			imageInput.style.display = "block";
+		} else {
+			// Hide the div related to gpt-4-vision-preview for other models
+			imageInput.style.display = "none";
+		}
+	}
+
 	// Function to send a message to the assistant.
 	async function sendMessage() {
 		const apiKey = apiKeyInput.value;
@@ -75,6 +91,13 @@ function initializeApp() {
 		if (!userMessage) {
 			alert("Please enter a message to send.");
 			return;
+		}
+
+		if (modelSelect.value === "gpt-4-vision-preview") {
+			if (!imageInput.value) {
+				alert("Please enter a image URL to send.");
+				return;
+			}
 		}
 
 		// Show user sent message and clear the message box
@@ -111,15 +134,35 @@ function initializeApp() {
 	async function fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens) {
 		const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
-		const completion = await openai.chat.completions.create({
-			messages: [
-				{
-					role: "system",
-					content:
-						"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible.",
+		const messages = [
+			{
+				role: "system",
+				content:
+					"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible.",
+			},
+			{
+				role: "user",
+				content: [
+					{
+						type: "text",
+						text: defaultPromptInput.value + userMessage,
+					},
+				],
+			},
+		];
+
+		// Check if the selected model is "gpt-4-vision-preview"
+		if (selectedModel === "gpt-4-vision-preview") {
+			messages[1].content.push({
+				type: "image_url",
+				image_url: {
+					"url": imageInput.value,
 				},
-				{ role: "user", content: defaultPromptInput.value + userMessage },
-			],
+			});
+		}
+
+		const completion = await openai.chat.completions.create({
+			messages: messages,
 			model: selectedModel,
 			temperature: temperature,
 			max_tokens: maxTokens,

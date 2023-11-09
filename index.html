@@ -21,8 +21,7 @@
 			</br>
 			<button id="saveButton">Save API Key</button>
 			</br>
-			<p>Built by <a href="https://vale.rocks">Vale</a>. Source code available on <a
-					href="https://github.com/DeclanChidlow/Lingo">Github</a>.</p>
+			<p>Built by <a href="https://vale.rocks">Vale</a>.</p>
 		</div>
 	</div>
 
@@ -38,6 +37,7 @@
 						<p>Jarg:</br> Give me a sec while I think...</p>
 					</div>
 				</div>
+				<textarea id="imageInput" placeholder="Place a link to your image here..."></textarea>
 				<div id="messageBox">
 					<textarea id="messageInput" placeholder="Type your message..."></textarea>
 					<button id="sendMessageButton">Send</button>
@@ -60,6 +60,7 @@
 							<optgroup label="GPT 4">
 								<option value="gpt-4">GPT-4</option>
 								<option value="gpt-4-1106-preview">GPT-4 Turbo</option>
+								<option value="gpt-4-vision-preview">GPT-4 Vision</option>
 							</optgroup>
 						</select>
 					</div>
@@ -75,15 +76,14 @@
 					</div>
 
 					<div id="setDefaultPrompt" title="Sets a prompt that will be included with every message.">
-						<label for="defaultPromptInput">Default Prompt:</label>
-						<textarea id="defaultPromptInput" placeholder="Type your default prompt...">Be a little bit	humorous and sarcastic when making a response.</textarea>
+						<label for="defaultPromptInput">Included Prompt:</label>
+						<textarea id="defaultPromptInput" placeholder="Type your included prompt..."></textarea>
 					</div>
 
 					<input type="reset" value="Reset">
 				</form>
 			</div>
-			<code>Jarg v1.1.3</br> Built by <a href="https://vale.rocks">Vale</a>.
-				Source code available on <a href="https://github.com/DeclanChidlow/Lingo">Github</a>.</code>
+			<code>Jarg v1.2.0</br> Built by <a href="https://vale.rocks">Vale</a>.</code>
 		</div>
 	</div>
 

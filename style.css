@@ -1,11 +1,7 @@
 @import "https://vale.rocks/style/colours.css";
-
 @import "https://vale.rocks/style/input.css";
-
 @import "https://vale.rocks/style/links.css";
-
 @import "https://vale.rocks/style/type.css";
-
 @import "https://vale.rocks/style/reset.css";
 
 body {
@@ -16,6 +12,10 @@ body {
 	display: none;
  /* Will be set to flex by JS */
 	height: 100dvh;
+}
+
+input, button, textarea, select {
+	display: block;
 }
 
 /* Chat Window */
@@ -58,6 +58,10 @@ body {
 #messageInput {
 	flex: 1;
 	min-height: 2rem;
+}
+
+#imageInput {
+	display: none;
 }
 
 /* Sidebar */
