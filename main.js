@@ -116,7 +116,7 @@ function initializeApp() {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
 			// Display the assistant's message in the chat log.
-			displayMessage(assistantResponse, "Jarg");
+			displayMessage(marked.parse(assistantResponse), "Jarg");
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -173,22 +173,23 @@ function initializeApp() {
 	function displayMessage(text, role) {
 		const messageContainer = document.createElement("div");
 		const messageElement = document.createElement("p");
-		const label = document.createElement("span");
-		label.style.fontWeight = "bold";
+		const userLabel = document.createElement("span");
+
+		userLabel.style.fontWeight = "bold";
+		messageElement.appendChild(userLabel);
 
 		if (role === "user") {
-			label.textContent = "You: ";
+			userLabel.textContent = "You: ";
 			messageContainer.id = "userMessage";
 		} else if (role === "Jarg") {
-			label.textContent = "Jarg: ";
-			messageContainer.id = "assistantResponse";
+			userLabel.textContent = "Jarg: ";
+			messageContainer.id = marked.parse("assistantResponse");
 		}
 
-		messageElement.textContent = text;
-		messageElement.prepend(document.createElement("br"));
-		messageElement.prepend(label);
-		messageContainer.appendChild(messageElement);
+		messageElement.appendChild(document.createElement("br"));
+		messageElement.innerHTML += text;
 
+		messageContainer.appendChild(messageElement);
 		chatLog.appendChild(messageContainer);
 	}
 

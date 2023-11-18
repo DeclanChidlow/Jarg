@@ -117,7 +117,7 @@ function initializeApp() {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
 			// Display the assistant's message in the chat log.
-			displayMessage(assistantResponse, "Jarg");
+			displayMessage(marked.parse(assistantResponse), "Jarg");
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -152,13 +152,12 @@ function initializeApp() {
 
 		// Check if the selected model is "gpt-4-vision-preview"
 		if (selectedModel === "gpt-4-vision-preview") {
-			const messageWithImage = {
+			messages[1].content.push({
 				type: "image_url",
 				image_url: {
 					"url": imageInput.value,
 				},
-			};
-			messages[1].content.push(messageWithImage);
+			});
 		}
 
 		const completion = await openai.chat.completions.create({
@@ -172,34 +171,26 @@ function initializeApp() {
 	}
 
 	// Function to display a message in the chat log.
-	function displayMessage(content, role) {
+	function displayMessage(text, role) {
 		const messageContainer = document.createElement("div");
-		const label = document.createElement("span");
-		label.style.fontWeight = "bold";
+		const messageElement = document.createElement("p");
+		const userLabel = document.createElement("span");
+
+		userLabel.style.fontWeight = "bold";
+		messageElement.appendChild(userLabel);
 
 		if (role === "user") {
-			label.textContent = "You: ";
+			userLabel.textContent = "You: ";
 			messageContainer.id = "userMessage";
 		} else if (role === "Jarg") {
-			label.textContent = "Jarg: ";
-			messageContainer.id = "assistantResponse";
+			userLabel.textContent = "Jarg: ";
+			messageContainer.id = marked.parse("assistantResponse");
 		}
 
-		if (content.type === "text") {
-			const messageElement = document.createElement("p");
-			const text = content.text;
-			messageElement.textContent = text;
-			messageElement.prepend(document.createElement("br"));
-			messageElement.prepend(label);
-			messageContainer.appendChild(messageElement);
-		} else if (content.type === "image_url") {
-			const imageElement = document.createElement("img");
-			const imageUrl = content.image_url.url;
-			imageElement.src = imageUrl;
-			imageElement.alt = "User's Image";
-			messageContainer.appendChild(imageElement);
-		}
+		messageElement.appendChild(document.createElement("br"));
+		messageElement.innerHTML += text;
 
+		messageContainer.appendChild(messageElement);
 		chatLog.appendChild(messageContainer);
 	}
 
