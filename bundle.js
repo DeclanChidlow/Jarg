@@ -152,12 +152,13 @@ function initializeApp() {
 
 		// Check if the selected model is "gpt-4-vision-preview"
 		if (selectedModel === "gpt-4-vision-preview") {
-			messages[1].content.push({
+			const messageWithImage = {
 				type: "image_url",
 				image_url: {
 					"url": imageInput.value,
 				},
-			});
+			};
+			messages[1].content.push(messageWithImage);
 		}
 
 		const completion = await openai.chat.completions.create({
@@ -171,9 +172,8 @@ function initializeApp() {
 	}
 
 	// Function to display a message in the chat log.
-	function displayMessage(text, role) {
+	function displayMessage(content, role) {
 		const messageContainer = document.createElement("div");
-		const messageElement = document.createElement("p");
 		const label = document.createElement("span");
 		label.style.fontWeight = "bold";
 
@@ -185,10 +185,20 @@ function initializeApp() {
 			messageContainer.id = "assistantResponse";
 		}
 
-		messageElement.textContent = text;
-		messageElement.prepend(document.createElement("br"));
-		messageElement.prepend(label);
-		messageContainer.appendChild(messageElement);
+		if (content.type === "text") {
+			const messageElement = document.createElement("p");
+			const text = content.text;
+			messageElement.textContent = text;
+			messageElement.prepend(document.createElement("br"));
+			messageElement.prepend(label);
+			messageContainer.appendChild(messageElement);
+		} else if (content.type === "image_url") {
+			const imageElement = document.createElement("img");
+			const imageUrl = content.image_url.url;
+			imageElement.src = imageUrl;
+			imageElement.alt = "User's Image";
+			messageContainer.appendChild(imageElement);
+		}
 
 		chatLog.appendChild(messageContainer);
 	}
