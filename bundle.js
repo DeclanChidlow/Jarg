@@ -15,10 +15,11 @@ function initializeApp() {
 		maxTokensInput = document.querySelector("#maxTokensInput"),
 		defaultPromptInput = document.querySelector("#defaultPromptInput");
 
-	// Elements related to the user interface.
+	// Elements related to displaying the user interface.
 	const loginDiv = document.querySelector("#login"),
 		appDiv = document.querySelector("#app"),
-		loadingDiv = document.querySelector("#loading");
+		loadingDiv = document.querySelector("#loading"),
+		sendButton = document.querySelector("#sendMessageButton");
 
 	// Check if the API key is stored in a cookie when the page loads.
 	const storedApiKey = getCookie("openaiApiKey");
@@ -31,9 +32,6 @@ function initializeApp() {
 		// The API key is not saved; show the login interface.
 		showLoginInterface();
 	}
-
-	// Elements related to the user interface.
-	const sendButton = document.querySelector("#sendMessageButton");
 
 	// Attach event listeners to UI elements.
 	document.querySelector("#saveButton").addEventListener("click", saveApiKey);
@@ -102,7 +100,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage("You: " + marked.parse(userMessage));
+		displayMessage("You: " + userMessage);
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;

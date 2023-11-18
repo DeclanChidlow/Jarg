@@ -14,8 +14,12 @@ body {
 	height: 100dvh;
 }
 
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
 	display: block;
+	width: 100%;
 }
 
 /* Chat Window */
@@ -64,6 +68,10 @@ input, button, textarea, select {
 	display: none;
 }
 
+#sendMessageButton {
+	width: auto;
+}
+
 /* Sidebar */
 
 #sidebar {
@@ -105,5 +113,4 @@ input, button, textarea, select {
 #sidebar {
 	max-width: inherit;
 }
-
 }
