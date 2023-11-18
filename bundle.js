@@ -100,7 +100,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage("You: " + userMessage);
+		displayMessage(userMessage, "user");
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
@@ -117,7 +117,7 @@ function initializeApp() {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
 			// Display the assistant's message in the chat log.
-			displayMessage("Jarg: " + marked.parse(assistantResponse));
+			displayMessage(assistantResponse, "Jarg");
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -171,10 +171,26 @@ function initializeApp() {
 	}
 
 	// Function to display a message in the chat log.
-	function displayMessage(text) {
+	function displayMessage(text, role) {
+		const messageContainer = document.createElement("div");
 		const messageElement = document.createElement("p");
-		messageElement.innerHTML = text;
-		chatLog.appendChild(messageElement);
+		const label = document.createElement("span");
+		label.style.fontWeight = "bold";
+
+		if (role === "user") {
+			label.textContent = "You: ";
+			messageContainer.id = "userMessage";
+		} else if (role === "Jarg") {
+			label.textContent = "Jarg: ";
+			messageContainer.id = "assistantResponse";
+		}
+
+		messageElement.textContent = text;
+		messageElement.prepend(document.createElement("br"));
+		messageElement.prepend(label);
+		messageContainer.appendChild(messageElement);
+
+		chatLog.appendChild(messageContainer);
 	}
 
 	// Function to set a cookie.
