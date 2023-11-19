@@ -36,6 +36,21 @@ function initializeApp() {
 	document.querySelector("#saveButton").addEventListener("click", saveApiKey);
 	sendButton.addEventListener("click", sendMessage);
 
+	messageInput.addEventListener("keydown", function(e) {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			sendMessage();
+		} else if (e.key === "Enter" && e.shiftKey) {
+			const cursorPosition = this.selectionStart;
+			const textBeforeCursor = this.value.substring(0, cursorPosition);
+			const textAfterCursor = this.value.substring(cursorPosition);
+
+			this.value = textBeforeCursor + "\n" + textAfterCursor;
+			this.selectionStart = this.selectionEnd = cursorPosition + 1;
+			e.preventDefault();
+		}
+	});
+
 	// Function to display the application interface.
 	function showAppInterface() {
 		loginDiv.style.display = "none";
@@ -99,7 +114,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage(userMessage, "user");
+		displayMessage(userMessage);
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
@@ -115,16 +130,12 @@ function initializeApp() {
 		try {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
-			// Display the assistant's message in the chat log.
-			displayMessage(marked.parse(assistantResponse), "Jarg");
-
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
 			alert("An error occurred while fetching the assistant response.");
 		} finally {
-			// Enable the send button and hide the loading indicator after the assistant responds.
+			// Enable the send button after the assistant responds.
 			sendButton.disabled = false;
-			loadingDiv.style.display = "none";
 		}
 	}
 
@@ -164,13 +175,21 @@ function initializeApp() {
 			model: selectedModel,
 			temperature: temperature,
 			max_tokens: maxTokens,
+			stream: true,
 		});
 
-		return completion.choices[0].message.content;
+		let assistantResponseContainer = createAssistantResponseContainer();
+
+		for await (const chunk of completion) {
+			const assistantText = chunk.choices[0].delta.content;
+			appendToAssistantResponse(assistantText, assistantResponseContainer);
+		}
 	}
 
-	// Function to display a message in the chat log.
-	function displayMessage(text, role) {
+	// Function to create the assistant response container
+	function createAssistantResponseContainer() {
+		loadingDiv.style.display = "none";
+
 		const messageContainer = document.createElement("div");
 		const messageElement = document.createElement("p");
 		const userLabel = document.createElement("span");
@@ -178,13 +197,35 @@ function initializeApp() {
 		userLabel.style.fontWeight = "bold";
 		messageElement.appendChild(userLabel);
 
-		if (role === "user") {
-			userLabel.textContent = "You: ";
-			messageContainer.id = "userMessage";
-		} else if (role === "Jarg") {
-			userLabel.textContent = "Jarg: ";
-			messageContainer.id = marked.parse("assistantResponse");
+		userLabel.textContent = "Jarg: ";
+		messageContainer.id = "assistantResponse";
+
+		messageElement.appendChild(document.createElement("br"));
+
+		messageContainer.appendChild(messageElement);
+		chatLog.appendChild(messageContainer);
+
+		return messageElement;
+	}
+
+	// Function to append streamed content to the assistant response container
+	function appendToAssistantResponse(text, messageElement) {
+		if (text && text.trim() !== '') { // Check for empty or undefined text
+			messageElement.innerHTML += text;
 		}
+	}
+
+	// Function to display a message in the chat log.
+	function displayMessage(text) {
+		const messageContainer = document.createElement("div");
+		const messageElement = document.createElement("p");
+		const userLabel = document.createElement("span");
+
+		userLabel.style.fontWeight = "bold";
+		messageElement.appendChild(userLabel);
+
+		userLabel.textContent = "You: ";
+		messageContainer.id = "userMessage";
 
 		messageElement.appendChild(document.createElement("br"));
 		messageElement.innerHTML += text;

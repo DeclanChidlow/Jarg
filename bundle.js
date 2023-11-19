@@ -37,6 +37,21 @@ function initializeApp() {
 	document.querySelector("#saveButton").addEventListener("click", saveApiKey);
 	sendButton.addEventListener("click", sendMessage);
 
+	messageInput.addEventListener("keydown", function(e) {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			sendMessage();
+		} else if (e.key === "Enter" && e.shiftKey) {
+			const cursorPosition = this.selectionStart;
+			const textBeforeCursor = this.value.substring(0, cursorPosition);
+			const textAfterCursor = this.value.substring(cursorPosition);
+
+			this.value = textBeforeCursor + "\n" + textAfterCursor;
+			this.selectionStart = this.selectionEnd = cursorPosition + 1;
+			e.preventDefault();
+		}
+	});
+
 	// Function to display the application interface.
 	function showAppInterface() {
 		loginDiv.style.display = "none";
@@ -100,7 +115,7 @@ function initializeApp() {
 		}
 
 		// Show user sent message and clear the message box
-		displayMessage(userMessage, "user");
+		displayMessage(userMessage);
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
@@ -116,16 +131,12 @@ function initializeApp() {
 		try {
 			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
 
-			// Display the assistant's message in the chat log.
-			displayMessage(marked.parse(assistantResponse), "Jarg");
-
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
 			alert("An error occurred while fetching the assistant response.");
 		} finally {
-			// Enable the send button and hide the loading indicator after the assistant responds.
+			// Enable the send button after the assistant responds.
 			sendButton.disabled = false;
-			loadingDiv.style.display = "none";
 		}
 	}
 
@@ -165,13 +176,21 @@ function initializeApp() {
 			model: selectedModel,
 			temperature: temperature,
 			max_tokens: maxTokens,
+			stream: true,
 		});
 
-		return completion.choices[0].message.content;
+		let assistantResponseContainer = createAssistantResponseContainer();
+
+		for await (const chunk of completion) {
+			const assistantText = chunk.choices[0].delta.content;
+			appendToAssistantResponse(assistantText, assistantResponseContainer);
+		}
 	}
 
-	// Function to display a message in the chat log.
-	function displayMessage(text, role) {
+	// Function to create the assistant response container
+	function createAssistantResponseContainer() {
+		loadingDiv.style.display = "none";
+
 		const messageContainer = document.createElement("div");
 		const messageElement = document.createElement("p");
 		const userLabel = document.createElement("span");
@@ -179,13 +198,35 @@ function initializeApp() {
 		userLabel.style.fontWeight = "bold";
 		messageElement.appendChild(userLabel);
 
-		if (role === "user") {
-			userLabel.textContent = "You: ";
-			messageContainer.id = "userMessage";
-		} else if (role === "Jarg") {
-			userLabel.textContent = "Jarg: ";
-			messageContainer.id = marked.parse("assistantResponse");
+		userLabel.textContent = "Jarg: ";
+		messageContainer.id = "assistantResponse";
+
+		messageElement.appendChild(document.createElement("br"));
+
+		messageContainer.appendChild(messageElement);
+		chatLog.appendChild(messageContainer);
+
+		return messageElement;
+	}
+
+	// Function to append streamed content to the assistant response container
+	function appendToAssistantResponse(text, messageElement) {
+		if (text && text.trim() !== '') { // Check for empty or undefined text
+			messageElement.innerHTML += text;
 		}
+	}
+
+	// Function to display a message in the chat log.
+	function displayMessage(text) {
+		const messageContainer = document.createElement("div");
+		const messageElement = document.createElement("p");
+		const userLabel = document.createElement("span");
+
+		userLabel.style.fontWeight = "bold";
+		messageElement.appendChild(userLabel);
+
+		userLabel.textContent = "You: ";
+		messageContainer.id = "userMessage";
 
 		messageElement.appendChild(document.createElement("br"));
 		messageElement.innerHTML += text;
@@ -407,7 +448,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _AbstractPage_client;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toBase64 = exports.getRequiredHeader = exports.isHeadersProtocol = exports.isRunningInBrowser = exports.debug = exports.hasOwn = exports.isEmptyObj = exports.maybeCoerceBoolean = exports.maybeCoerceFloat = exports.maybeCoerceInteger = exports.coerceBoolean = exports.coerceFloat = exports.coerceInteger = exports.readEnv = exports.ensurePresent = exports.castToError = exports.sleep = exports.safeJSON = exports.isRequestOptions = exports.createResponseHeaders = exports.PagePromise = exports.AbstractPage = exports.APIResource = exports.APIClient = exports.APIPromise = exports.createForm = exports.multipartFormRequestOptions = exports.maybeMultipartFormRequestOptions = void 0;
+exports.toBase64 = exports.getRequiredHeader = exports.isHeadersProtocol = exports.isRunningInBrowser = exports.debug = exports.hasOwn = exports.isEmptyObj = exports.maybeCoerceBoolean = exports.maybeCoerceFloat = exports.maybeCoerceInteger = exports.coerceBoolean = exports.coerceFloat = exports.coerceInteger = exports.readEnv = exports.ensurePresent = exports.castToError = exports.sleep = exports.safeJSON = exports.isRequestOptions = exports.createResponseHeaders = exports.PagePromise = exports.AbstractPage = exports.APIClient = exports.APIPromise = exports.createForm = exports.multipartFormRequestOptions = exports.maybeMultipartFormRequestOptions = void 0;
 const version_1 = require("./version.js");
 const streaming_1 = require("./streaming.js");
 const error_1 = require("./error.js");
@@ -795,18 +836,6 @@ class APIClient {
     }
 }
 exports.APIClient = APIClient;
-class APIResource {
-    constructor(client) {
-        this.client = client;
-        this.get = client.get.bind(client);
-        this.post = client.post.bind(client);
-        this.patch = client.patch.bind(client);
-        this.put = client.put.bind(client);
-        this.delete = client.delete.bind(client);
-        this.getAPIList = client.getAPIList.bind(client);
-    }
-}
-exports.APIResource = APIResource;
 class AbstractPage {
     constructor(client, response, body, options) {
         _AbstractPage_client.set(this, void 0);
@@ -1235,7 +1264,7 @@ const toBase64 = (str) => {
 exports.toBase64 = toBase64;
 
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
-},{"./_shims/index.js":4,"./error.js":8,"./streaming.js":46,"./uploads.js":47,"./version.js":48,"_process":52,"buffer":50}],8:[function(require,module,exports){
+},{"./_shims/index.js":4,"./error.js":8,"./streaming.js":47,"./uploads.js":48,"./version.js":49,"_process":53,"buffer":51}],8:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1526,7 +1555,7 @@ exports.fileFromPath = Uploads.fileFromPath;
 exports = module.exports = OpenAI;
 exports.default = OpenAI;
 
-},{"./core.js":7,"./error.js":8,"./pagination.js":16,"./uploads.js":47,"openai/resources/index":43}],10:[function(require,module,exports){
+},{"./core.js":7,"./error.js":8,"./pagination.js":16,"./uploads.js":48,"openai/resources/index":43}],10:[function(require,module,exports){
 "use strict";
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
     if (kind === "m") throw new TypeError("Private method is not writable");
@@ -1998,6 +2027,7 @@ _AbstractChatCompletionRunner_connectedPromise = new WeakMap(), _AbstractChatCom
             return message.function_call;
         }
     }
+    return;
 }, _AbstractChatCompletionRunner_getFinalFunctionCallResult = function _AbstractChatCompletionRunner_getFinalFunctionCallResult() {
     for (let i = this.messages.length - 1; i >= 0; i--) {
         const message = this.messages[i];
@@ -2005,6 +2035,7 @@ _AbstractChatCompletionRunner_connectedPromise = new WeakMap(), _AbstractChatCom
             return message.content;
         }
     }
+    return;
 }, _AbstractChatCompletionRunner_calculateTotalUsage = function _AbstractChatCompletionRunner_calculateTotalUsage() {
     const total = {
         completion_tokens: 0,
@@ -2097,7 +2128,7 @@ class ChatCompletionStream extends AbstractChatCompletionRunner_1.AbstractChatCo
     }
     static createChatCompletion(completions, params, options) {
         const runner = new ChatCompletionStream();
-        runner._run(() => runner._runChatCompletion(completions, { ...params, stream: true }, options));
+        runner._run(() => runner._runChatCompletion(completions, { ...params, stream: true }, { ...options, headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'stream' } }));
         return runner;
     }
     async _createChatCompletion(completions, params, options) {
@@ -2319,7 +2350,7 @@ function str(x) {
     return JSON.stringify(x);
 }
 
-},{"./AbstractChatCompletionRunner.js":10,"openai/error":8,"openai/streaming":46}],13:[function(require,module,exports){
+},{"./AbstractChatCompletionRunner.js":10,"openai/error":8,"openai/streaming":47}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatCompletionStreamingRunner = void 0;
@@ -2332,12 +2363,18 @@ class ChatCompletionStreamingRunner extends ChatCompletionStream_1.ChatCompletio
     }
     static runFunctions(completions, params, options) {
         const runner = new ChatCompletionStreamingRunner();
-        runner._run(() => runner._runFunctions(completions, params, options));
+        runner._run(() => runner._runFunctions(completions, params, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runFunctions' },
+        }));
         return runner;
     }
     static runTools(completions, params, options) {
         const runner = new ChatCompletionStreamingRunner();
-        runner._run(() => runner._runTools(completions, params, options));
+        runner._run(() => runner._runTools(completions, params, {
+            ...options,
+            headers: { ...options?.headers, 'X-Stainless-Helper-Method': 'runTools' },
+        }));
         return runner;
     }
 }
@@ -2457,13 +2494,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.APIResource = void 0;
 class APIResource {
     constructor(client) {
-        this.client = client;
-        this.get = client.get.bind(client);
-        this.post = client.post.bind(client);
-        this.patch = client.patch.bind(client);
-        this.put = client.put.bind(client);
-        this.delete = client.delete.bind(client);
-        this.getAPIList = client.getAPIList.bind(client);
+        this._client = client;
     }
 }
 exports.APIResource = APIResource;
@@ -2503,9 +2534,9 @@ const TranslationsAPI = __importStar(require("openai/resources/audio/translation
 class Audio extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.transcriptions = new TranscriptionsAPI.Transcriptions(this.client);
-        this.translations = new TranslationsAPI.Translations(this.client);
-        this.speech = new SpeechAPI.Speech(this.client);
+        this.transcriptions = new TranscriptionsAPI.Transcriptions(this._client);
+        this.translations = new TranslationsAPI.Translations(this._client);
+        this.speech = new SpeechAPI.Speech(this._client);
     }
 }
 exports.Audio = Audio;
@@ -2526,7 +2557,7 @@ class Speech extends resource_1.APIResource {
      * Generates audio from the input text.
      */
     create(body, options) {
-        return this.post('/audio/speech', { body, ...options, __binaryResponse: true });
+        return this._client.post('/audio/speech', { body, ...options, __binaryResponse: true });
     }
 }
 exports.Speech = Speech;
@@ -2545,7 +2576,7 @@ class Transcriptions extends resource_1.APIResource {
      * Transcribes audio into the input language.
      */
     create(body, options) {
-        return this.post('/audio/transcriptions', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
+        return this._client.post('/audio/transcriptions', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
     }
 }
 exports.Transcriptions = Transcriptions;
@@ -2564,7 +2595,7 @@ class Translations extends resource_1.APIResource {
      * Translates audio into English.
      */
     create(body, options) {
-        return this.post('/audio/translations', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
+        return this._client.post('/audio/translations', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
     }
 }
 exports.Translations = Translations;
@@ -2607,13 +2638,13 @@ const pagination_1 = require("openai/pagination");
 class Assistants extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.files = new FilesAPI.Files(this.client);
+        this.files = new FilesAPI.Files(this._client);
     }
     /**
      * Create an assistant with a model and instructions.
      */
     create(body, options) {
-        return this.post('/assistants', {
+        return this._client.post('/assistants', {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2623,7 +2654,7 @@ class Assistants extends resource_1.APIResource {
      * Retrieves an assistant.
      */
     retrieve(assistantId, options) {
-        return this.get(`/assistants/${assistantId}`, {
+        return this._client.get(`/assistants/${assistantId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -2632,7 +2663,7 @@ class Assistants extends resource_1.APIResource {
      * Modifies an assistant.
      */
     update(assistantId, body, options) {
-        return this.post(`/assistants/${assistantId}`, {
+        return this._client.post(`/assistants/${assistantId}`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2642,7 +2673,7 @@ class Assistants extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list({}, query);
         }
-        return this.getAPIList('/assistants', AssistantsPage, {
+        return this._client.getAPIList('/assistants', AssistantsPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2652,7 +2683,7 @@ class Assistants extends resource_1.APIResource {
      * Delete an assistant.
      */
     del(assistantId, options) {
-        return this.delete(`/assistants/${assistantId}`, {
+        return this._client.delete(`/assistants/${assistantId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -2707,7 +2738,7 @@ class Files extends resource_1.APIResource {
      * [assistant](https://platform.openai.com/docs/api-reference/assistants).
      */
     create(assistantId, body, options) {
-        return this.post(`/assistants/${assistantId}/files`, {
+        return this._client.post(`/assistants/${assistantId}/files`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2717,7 +2748,7 @@ class Files extends resource_1.APIResource {
      * Retrieves an AssistantFile.
      */
     retrieve(assistantId, fileId, options) {
-        return this.get(`/assistants/${assistantId}/files/${fileId}`, {
+        return this._client.get(`/assistants/${assistantId}/files/${fileId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -2726,7 +2757,7 @@ class Files extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list(assistantId, {}, query);
         }
-        return this.getAPIList(`/assistants/${assistantId}/files`, AssistantFilesPage, {
+        return this._client.getAPIList(`/assistants/${assistantId}/files`, AssistantFilesPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2736,7 +2767,7 @@ class Files extends resource_1.APIResource {
      * Delete an assistant file.
      */
     del(assistantId, fileId, options) {
-        return this.delete(`/assistants/${assistantId}/files/${fileId}`, {
+        return this._client.delete(`/assistants/${assistantId}/files/${fileId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -2785,9 +2816,9 @@ const ThreadsAPI = __importStar(require("openai/resources/beta/threads/threads")
 class Beta extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.chat = new ChatAPI.Chat(this.client);
-        this.assistants = new AssistantsAPI.Assistants(this.client);
-        this.threads = new ThreadsAPI.Threads(this.client);
+        this.chat = new ChatAPI.Chat(this._client);
+        this.assistants = new AssistantsAPI.Assistants(this._client);
+        this.threads = new ThreadsAPI.Threads(this._client);
     }
 }
 exports.Beta = Beta;
@@ -2831,7 +2862,7 @@ const CompletionsAPI = __importStar(require("openai/resources/beta/chat/completi
 class Chat extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.completions = new CompletionsAPI.Completions(this.client);
+        this.completions = new CompletionsAPI.Completions(this._client);
     }
 }
 exports.Chat = Chat;
@@ -2859,21 +2890,21 @@ Object.defineProperty(exports, "ChatCompletionStream", { enumerable: true, get: 
 class Completions extends resource_1.APIResource {
     runFunctions(body, options) {
         if (body.stream) {
-            return ChatCompletionStreamingRunner_1.ChatCompletionStreamingRunner.runFunctions(this.client.chat.completions, body, options);
+            return ChatCompletionStreamingRunner_1.ChatCompletionStreamingRunner.runFunctions(this._client.chat.completions, body, options);
         }
-        return ChatCompletionRunner_1.ChatCompletionRunner.runFunctions(this.client.chat.completions, body, options);
+        return ChatCompletionRunner_1.ChatCompletionRunner.runFunctions(this._client.chat.completions, body, options);
     }
     runTools(body, options) {
         if (body.stream) {
-            return ChatCompletionStreamingRunner_1.ChatCompletionStreamingRunner.runTools(this.client.chat.completions, body, options);
+            return ChatCompletionStreamingRunner_1.ChatCompletionStreamingRunner.runTools(this._client.chat.completions, body, options);
         }
-        return ChatCompletionRunner_1.ChatCompletionRunner.runTools(this.client.chat.completions, body, options);
+        return ChatCompletionRunner_1.ChatCompletionRunner.runTools(this._client.chat.completions, body, options);
     }
     /**
      * Creates a chat completion stream
      */
     stream(body, options) {
-        return ChatCompletionStream_1.ChatCompletionStream.createChatCompletion(this.client.chat.completions, body, options);
+        return ChatCompletionStream_1.ChatCompletionStream.createChatCompletion(this._client.chat.completions, body, options);
     }
 }
 exports.Completions = Completions;
@@ -2915,7 +2946,7 @@ class Files extends resource_1.APIResource {
      * Retrieves a message file.
      */
     retrieve(threadId, messageId, fileId, options) {
-        return this.get(`/threads/${threadId}/messages/${messageId}/files/${fileId}`, {
+        return this._client.get(`/threads/${threadId}/messages/${messageId}/files/${fileId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -2924,7 +2955,7 @@ class Files extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list(threadId, messageId, {}, query);
         }
-        return this.getAPIList(`/threads/${threadId}/messages/${messageId}/files`, MessageFilesPage, {
+        return this._client.getAPIList(`/threads/${threadId}/messages/${messageId}/files`, MessageFilesPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2975,13 +3006,13 @@ const pagination_1 = require("openai/pagination");
 class Messages extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.files = new FilesAPI.Files(this.client);
+        this.files = new FilesAPI.Files(this._client);
     }
     /**
      * Create a message.
      */
     create(threadId, body, options) {
-        return this.post(`/threads/${threadId}/messages`, {
+        return this._client.post(`/threads/${threadId}/messages`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -2991,7 +3022,7 @@ class Messages extends resource_1.APIResource {
      * Retrieve a message.
      */
     retrieve(threadId, messageId, options) {
-        return this.get(`/threads/${threadId}/messages/${messageId}`, {
+        return this._client.get(`/threads/${threadId}/messages/${messageId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3000,7 +3031,7 @@ class Messages extends resource_1.APIResource {
      * Modifies a message.
      */
     update(threadId, messageId, body, options) {
-        return this.post(`/threads/${threadId}/messages/${messageId}`, {
+        return this._client.post(`/threads/${threadId}/messages/${messageId}`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3010,7 +3041,7 @@ class Messages extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list(threadId, {}, query);
         }
-        return this.getAPIList(`/threads/${threadId}/messages`, ThreadMessagesPage, {
+        return this._client.getAPIList(`/threads/${threadId}/messages`, ThreadMessagesPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3063,13 +3094,13 @@ const pagination_1 = require("openai/pagination");
 class Runs extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.steps = new StepsAPI.Steps(this.client);
+        this.steps = new StepsAPI.Steps(this._client);
     }
     /**
      * Create a run.
      */
     create(threadId, body, options) {
-        return this.post(`/threads/${threadId}/runs`, {
+        return this._client.post(`/threads/${threadId}/runs`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3079,7 +3110,7 @@ class Runs extends resource_1.APIResource {
      * Retrieves a run.
      */
     retrieve(threadId, runId, options) {
-        return this.get(`/threads/${threadId}/runs/${runId}`, {
+        return this._client.get(`/threads/${threadId}/runs/${runId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3088,7 +3119,7 @@ class Runs extends resource_1.APIResource {
      * Modifies a run.
      */
     update(threadId, runId, body, options) {
-        return this.post(`/threads/${threadId}/runs/${runId}`, {
+        return this._client.post(`/threads/${threadId}/runs/${runId}`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3098,7 +3129,7 @@ class Runs extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list(threadId, {}, query);
         }
-        return this.getAPIList(`/threads/${threadId}/runs`, RunsPage, {
+        return this._client.getAPIList(`/threads/${threadId}/runs`, RunsPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3108,7 +3139,7 @@ class Runs extends resource_1.APIResource {
      * Cancels a run that is `in_progress`.
      */
     cancel(threadId, runId, options) {
-        return this.post(`/threads/${threadId}/runs/${runId}/cancel`, {
+        return this._client.post(`/threads/${threadId}/runs/${runId}/cancel`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3120,7 +3151,7 @@ class Runs extends resource_1.APIResource {
      * request.
      */
     submitToolOutputs(threadId, runId, body, options) {
-        return this.post(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
+        return this._client.post(`/threads/${threadId}/runs/${runId}/submit_tool_outputs`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3174,7 +3205,7 @@ class Steps extends resource_1.APIResource {
      * Retrieves a run step.
      */
     retrieve(threadId, runId, stepId, options) {
-        return this.get(`/threads/${threadId}/runs/${runId}/steps/${stepId}`, {
+        return this._client.get(`/threads/${threadId}/runs/${runId}/steps/${stepId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3183,7 +3214,7 @@ class Steps extends resource_1.APIResource {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list(threadId, runId, {}, query);
         }
-        return this.getAPIList(`/threads/${threadId}/runs/${runId}/steps`, RunStepsPage, {
+        return this._client.getAPIList(`/threads/${threadId}/runs/${runId}/steps`, RunStepsPage, {
             query,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3227,19 +3258,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Threads = void 0;
 const resource_1 = require("openai/resource");
+const core_1 = require("openai/core");
 const MessagesAPI = __importStar(require("openai/resources/beta/threads/messages/messages"));
 const RunsAPI = __importStar(require("openai/resources/beta/threads/runs/runs"));
 class Threads extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.runs = new RunsAPI.Runs(this.client);
-        this.messages = new MessagesAPI.Messages(this.client);
+        this.runs = new RunsAPI.Runs(this._client);
+        this.messages = new MessagesAPI.Messages(this._client);
     }
-    /**
-     * Create a thread.
-     */
-    create(body, options) {
-        return this.post('/threads', {
+    create(body = {}, options) {
+        if ((0, core_1.isRequestOptions)(body)) {
+            return this.create({}, body);
+        }
+        return this._client.post('/threads', {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3249,7 +3281,7 @@ class Threads extends resource_1.APIResource {
      * Retrieves a thread.
      */
     retrieve(threadId, options) {
-        return this.get(`/threads/${threadId}`, {
+        return this._client.get(`/threads/${threadId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3258,7 +3290,7 @@ class Threads extends resource_1.APIResource {
      * Modifies a thread.
      */
     update(threadId, body, options) {
-        return this.post(`/threads/${threadId}`, {
+        return this._client.post(`/threads/${threadId}`, {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3268,7 +3300,7 @@ class Threads extends resource_1.APIResource {
      * Delete a thread.
      */
     del(threadId, options) {
-        return this.delete(`/threads/${threadId}`, {
+        return this._client.delete(`/threads/${threadId}`, {
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
         });
@@ -3277,7 +3309,7 @@ class Threads extends resource_1.APIResource {
      * Create a thread and run it in one request.
      */
     createAndRun(body, options) {
-        return this.post('/threads/runs', {
+        return this._client.post('/threads/runs', {
             body,
             ...options,
             headers: { 'OpenAI-Beta': 'assistants=v1', ...options?.headers },
@@ -3292,7 +3324,7 @@ exports.Threads = Threads;
     Threads.ThreadMessagesPage = MessagesAPI.ThreadMessagesPage;
 })(Threads = exports.Threads || (exports.Threads = {}));
 
-},{"openai/resource":17,"openai/resources/beta/threads/messages/messages":28,"openai/resources/beta/threads/runs/runs":29}],32:[function(require,module,exports){
+},{"openai/core":7,"openai/resource":17,"openai/resources/beta/threads/messages/messages":28,"openai/resources/beta/threads/runs/runs":29}],32:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -3325,7 +3357,7 @@ const CompletionsAPI = __importStar(require("openai/resources/chat/completions")
 class Chat extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.completions = new CompletionsAPI.Completions(this.client);
+        this.completions = new CompletionsAPI.Completions(this._client);
     }
 }
 exports.Chat = Chat;
@@ -3341,7 +3373,7 @@ exports.Completions = void 0;
 const resource_1 = require("openai/resource");
 class Completions extends resource_1.APIResource {
     create(body, options) {
-        return this.post('/chat/completions', { body, ...options, stream: body.stream ?? false });
+        return this._client.post('/chat/completions', { body, ...options, stream: body.stream ?? false });
     }
 }
 exports.Completions = Completions;
@@ -3366,7 +3398,7 @@ exports.Completions = void 0;
 const resource_1 = require("openai/resource");
 class Completions extends resource_1.APIResource {
     create(body, options) {
-        return this.post('/completions', { body, ...options, stream: body.stream ?? false });
+        return this._client.post('/completions', { body, ...options, stream: body.stream ?? false });
     }
 }
 exports.Completions = Completions;
@@ -3388,7 +3420,7 @@ class Edits extends resource_1.APIResource {
      * https://openai.com/blog/gpt-4-api-general-availability#deprecation-of-the-edits-api
      */
     create(body, options) {
-        return this.post('/edits', { body, ...options });
+        return this._client.post('/edits', { body, ...options });
     }
 }
 exports.Edits = Edits;
@@ -3406,7 +3438,7 @@ class Embeddings extends resource_1.APIResource {
      * Creates an embedding vector representing the input text.
      */
     create(body, options) {
-        return this.post('/embeddings', { body, ...options });
+        return this._client.post('/embeddings', { body, ...options });
     }
 }
 exports.Embeddings = Embeddings;
@@ -3462,31 +3494,39 @@ class Files extends resource_1.APIResource {
      * storage limits.
      */
     create(body, options) {
-        return this.post('/files', (0, core_3.multipartFormRequestOptions)({ body, ...options }));
+        return this._client.post('/files', (0, core_3.multipartFormRequestOptions)({ body, ...options }));
     }
     /**
      * Returns information about a specific file.
      */
     retrieve(fileId, options) {
-        return this.get(`/files/${fileId}`, options);
+        return this._client.get(`/files/${fileId}`, options);
     }
     list(query = {}, options) {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list({}, query);
         }
-        return this.getAPIList('/files', FileObjectsPage, { query, ...options });
+        return this._client.getAPIList('/files', FileObjectsPage, { query, ...options });
     }
     /**
      * Delete a file.
      */
     del(fileId, options) {
-        return this.delete(`/files/${fileId}`, options);
+        return this._client.delete(`/files/${fileId}`, options);
     }
     /**
      * Returns the contents of the specified file.
      */
+    content(fileId, options) {
+        return this._client.get(`/files/${fileId}/content`, { ...options, __binaryResponse: true });
+    }
+    /**
+     * Returns the contents of the specified file.
+     *
+     * @deprecated The `.content()` method should be used instead
+     */
     retrieveContent(fileId, options) {
-        return this.get(`/files/${fileId}/content`, {
+        return this._client.get(`/files/${fileId}/content`, {
             ...options,
             headers: { Accept: 'application/json', ...options?.headers },
         });
@@ -3562,7 +3602,7 @@ class FineTunes extends resource_1.APIResource {
      * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/legacy-fine-tuning)
      */
     create(body, options) {
-        return this.post('/fine-tunes', { body, ...options });
+        return this._client.post('/fine-tunes', { body, ...options });
     }
     /**
      * Gets info about the fine-tune job.
@@ -3570,22 +3610,22 @@ class FineTunes extends resource_1.APIResource {
      * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/legacy-fine-tuning)
      */
     retrieve(fineTuneId, options) {
-        return this.get(`/fine-tunes/${fineTuneId}`, options);
+        return this._client.get(`/fine-tunes/${fineTuneId}`, options);
     }
     /**
      * List your organization's fine-tuning jobs
      */
     list(options) {
-        return this.getAPIList('/fine-tunes', FineTunesPage, options);
+        return this._client.getAPIList('/fine-tunes', FineTunesPage, options);
     }
     /**
      * Immediately cancel a fine-tune job.
      */
     cancel(fineTuneId, options) {
-        return this.post(`/fine-tunes/${fineTuneId}/cancel`, options);
+        return this._client.post(`/fine-tunes/${fineTuneId}/cancel`, options);
     }
     listEvents(fineTuneId, query, options) {
-        return this.get(`/fine-tunes/${fineTuneId}/events`, {
+        return this._client.get(`/fine-tunes/${fineTuneId}/events`, {
             query,
             timeout: 86400000,
             ...options,
@@ -3637,7 +3677,7 @@ const JobsAPI = __importStar(require("openai/resources/fine-tuning/jobs"));
 class FineTuning extends resource_1.APIResource {
     constructor() {
         super(...arguments);
-        this.jobs = new JobsAPI.Jobs(this.client);
+        this.jobs = new JobsAPI.Jobs(this._client);
     }
 }
 exports.FineTuning = FineTuning;
@@ -3689,7 +3729,7 @@ class Jobs extends resource_1.APIResource {
      * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/fine-tuning)
      */
     create(body, options) {
-        return this.post('/fine_tuning/jobs', { body, ...options });
+        return this._client.post('/fine_tuning/jobs', { body, ...options });
     }
     /**
      * Get info about a fine-tuning job.
@@ -3697,25 +3737,25 @@ class Jobs extends resource_1.APIResource {
      * [Learn more about fine-tuning](https://platform.openai.com/docs/guides/fine-tuning)
      */
     retrieve(fineTuningJobId, options) {
-        return this.get(`/fine_tuning/jobs/${fineTuningJobId}`, options);
+        return this._client.get(`/fine_tuning/jobs/${fineTuningJobId}`, options);
     }
     list(query = {}, options) {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.list({}, query);
         }
-        return this.getAPIList('/fine_tuning/jobs', FineTuningJobsPage, { query, ...options });
+        return this._client.getAPIList('/fine_tuning/jobs', FineTuningJobsPage, { query, ...options });
     }
     /**
      * Immediately cancel a fine-tune job.
      */
     cancel(fineTuningJobId, options) {
-        return this.post(`/fine_tuning/jobs/${fineTuningJobId}/cancel`, options);
+        return this._client.post(`/fine_tuning/jobs/${fineTuningJobId}/cancel`, options);
     }
     listEvents(fineTuningJobId, query = {}, options) {
         if ((0, core_1.isRequestOptions)(query)) {
             return this.listEvents(fineTuningJobId, {}, query);
         }
-        return this.getAPIList(`/fine_tuning/jobs/${fineTuningJobId}/events`, FineTuningJobEventsPage, {
+        return this._client.getAPIList(`/fine_tuning/jobs/${fineTuningJobId}/events`, FineTuningJobEventsPage, {
             query,
             ...options,
         });
@@ -3745,19 +3785,19 @@ class Images extends resource_1.APIResource {
      * Creates a variation of a given image.
      */
     createVariation(body, options) {
-        return this.post('/images/variations', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
+        return this._client.post('/images/variations', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
     }
     /**
      * Creates an edited or extended image given an original image and a prompt.
      */
     edit(body, options) {
-        return this.post('/images/edits', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
+        return this._client.post('/images/edits', (0, core_1.multipartFormRequestOptions)({ body, ...options }));
     }
     /**
      * Creates an image given a prompt.
      */
     generate(body, options) {
-        return this.post('/images/generations', { body, ...options });
+        return this._client.post('/images/generations', { body, ...options });
     }
 }
 exports.Images = Images;
@@ -3784,6 +3824,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Moderations = exports.Models = exports.ModelsPage = exports.Images = exports.FineTuning = exports.FineTunes = exports.FineTunesPage = exports.Files = exports.FileObjectsPage = exports.Edits = exports.Embeddings = exports.Completions = exports.Beta = exports.Audio = void 0;
 __exportStar(require("./chat/index.js"), exports);
+__exportStar(require("./shared.js"), exports);
 var audio_1 = require("./audio/audio.js");
 Object.defineProperty(exports, "Audio", { enumerable: true, get: function () { return audio_1.Audio; } });
 var beta_1 = require("./beta/beta.js");
@@ -3810,7 +3851,7 @@ Object.defineProperty(exports, "Models", { enumerable: true, get: function () { 
 var moderations_1 = require("./moderations.js");
 Object.defineProperty(exports, "Moderations", { enumerable: true, get: function () { return moderations_1.Moderations; } });
 
-},{"./audio/audio.js":18,"./beta/beta.js":24,"./chat/index.js":34,"./completions.js":35,"./edits.js":36,"./embeddings.js":37,"./files.js":38,"./fine-tunes.js":39,"./fine-tuning/fine-tuning.js":40,"./images.js":42,"./models.js":44,"./moderations.js":45}],44:[function(require,module,exports){
+},{"./audio/audio.js":18,"./beta/beta.js":24,"./chat/index.js":34,"./completions.js":35,"./edits.js":36,"./embeddings.js":37,"./files.js":38,"./fine-tunes.js":39,"./fine-tuning/fine-tuning.js":40,"./images.js":42,"./models.js":44,"./moderations.js":45,"./shared.js":46}],44:[function(require,module,exports){
 "use strict";
 // File generated from our OpenAPI spec by Stainless.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -3847,21 +3888,21 @@ class Models extends resource_1.APIResource {
      * the owner and permissioning.
      */
     retrieve(model, options) {
-        return this.get(`/models/${model}`, options);
+        return this._client.get(`/models/${model}`, options);
     }
     /**
      * Lists the currently available models, and provides basic information about each
      * one such as the owner and availability.
      */
     list(options) {
-        return this.getAPIList('/models', ModelsPage, options);
+        return this._client.getAPIList('/models', ModelsPage, options);
     }
     /**
      * Delete a fine-tuned model. You must have the Owner role in your organization to
      * delete a model.
      */
     del(model, options) {
-        return this.delete(`/models/${model}`, options);
+        return this._client.delete(`/models/${model}`, options);
     }
 }
 exports.Models = Models;
@@ -3886,7 +3927,7 @@ class Moderations extends resource_1.APIResource {
      * Classifies if text violates OpenAI's Content Policy
      */
     create(body, options) {
-        return this.post('/moderations', { body, ...options });
+        return this._client.post('/moderations', { body, ...options });
     }
 }
 exports.Moderations = Moderations;
@@ -3894,6 +3935,11 @@ exports.Moderations = Moderations;
 })(Moderations = exports.Moderations || (exports.Moderations = {}));
 
 },{"openai/resource":17}],46:[function(require,module,exports){
+"use strict";
+// File generated from our OpenAPI spec by Stainless.
+Object.defineProperty(exports, "__esModule", { value: true });
+
+},{}],47:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -4243,7 +4289,7 @@ function readableStreamAsyncIterable(stream) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./_shims/index.js":4,"./error.js":8,"buffer":50,"openai/error":8}],47:[function(require,module,exports){
+},{"./_shims/index.js":4,"./error.js":8,"buffer":51,"openai/error":8}],48:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -4408,13 +4454,13 @@ const addFormValue = async (form, key, value) => {
 };
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./_shims/index.js":4,"buffer":50}],48:[function(require,module,exports){
+},{"./_shims/index.js":4,"buffer":51}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VERSION = void 0;
-exports.VERSION = '4.16.1'; // x-release-please-version
+exports.VERSION = '4.19.0'; // x-release-please-version
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -4566,7 +4612,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -6347,7 +6393,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":49,"buffer":50,"ieee754":51}],51:[function(require,module,exports){
+},{"base64-js":50,"buffer":51,"ieee754":52}],52:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -6434,7 +6480,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
