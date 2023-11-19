@@ -12,7 +12,9 @@ function initializeApp() {
 		chatLog = document.querySelector("#messages"),
 		temperatureInput = document.querySelector("#temperatureInput"),
 		maxTokensInput = document.querySelector("#maxTokensInput"),
-		defaultPromptInput = document.querySelector("#defaultPromptInput");
+		topPInput = document.querySelector("#topPInput"),
+		frequencyPenaltyInput = document.querySelector("#frequencyPenaltyInput"),
+		presencePenaltyInput = document.querySelector("#presencePenaltyInput");
 
 	// Elements related to displaying the user interface.
 	const loginDiv = document.querySelector("#login"),
@@ -118,8 +120,11 @@ function initializeApp() {
 		messageInput.value = "";
 
 		const selectedModel = modelSelect.value;
-		const temperature = parseFloat(temperatureInput.value);
+		const selectedTemperature = parseFloat(temperatureInput.value);
 		const maxTokens = parseInt(maxTokensInput.value);
+		const selectedTopP = parseFloat(topPInput.value);
+		const selectedFrequencyPenalty = parseFloat(frequencyPenaltyInput.value);
+		const selectedPresencePenalty = parseFloat(presencePenaltyInput.value);
 
 		// Disable the send button while waiting for the assistant's response.
 		sendButton.disabled = true;
@@ -128,7 +133,7 @@ function initializeApp() {
 		loadingDiv.style.display = "block";
 
 		try {
-			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens);
+			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens);
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -140,7 +145,7 @@ function initializeApp() {
 	}
 
 	// Function to fetch the assistant's response.
-	async function fetchAssistantResponse(apiKey, userMessage, selectedModel, temperature, maxTokens) {
+	async function fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty) {
 		const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
 		const messages = [
@@ -173,8 +178,11 @@ function initializeApp() {
 		const completion = await openai.chat.completions.create({
 			messages: messages,
 			model: selectedModel,
-			temperature: temperature,
+			temperature: selectedTemperature,
 			max_tokens: maxTokens,
+			top_p: selectedTopP,
+			frequency_penalty: selectedFrequencyPenalty,
+			presence_penalty: selectedPresencePenalty,
 			stream: true,
 		});
 

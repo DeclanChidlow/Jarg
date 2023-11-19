@@ -81,10 +81,12 @@ select {
 	max-width: 20%;
 	min-width: 225px;
 	padding: 10px;
+	max-height: 100vh;
 }
 
 #settings {
 	flex: 1;
+	overflow-y: scroll;
 }
 
 /* Login */
@@ -112,5 +114,6 @@ select {
 
 #sidebar {
 	max-width: inherit;
+	max-height: inherit;
 }
 }
