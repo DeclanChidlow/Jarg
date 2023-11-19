@@ -9,8 +9,10 @@ function initializeApp() {
 		modelSelect = document.querySelector("#modelSelect"),
 		messageInput = document.querySelector("#messageInput"),
 		imageInput = document.querySelector("#imageInput"),
-		chatLog = document.querySelector("#messages"),
-		temperatureInput = document.querySelector("#temperatureInput"),
+		chatLog = document.querySelector("#messages");
+
+	// Retrieve elements for settings
+	const temperatureInput = document.querySelector("#temperatureInput"),
 		maxTokensInput = document.querySelector("#maxTokensInput"),
 		topPInput = document.querySelector("#topPInput"),
 		frequencyPenaltyInput = document.querySelector("#frequencyPenaltyInput"),
@@ -43,9 +45,9 @@ function initializeApp() {
 			e.preventDefault();
 			sendMessage();
 		} else if (e.key === "Enter" && e.shiftKey) {
-			const cursorPosition = this.selectionStart;
-			const textBeforeCursor = this.value.substring(0, cursorPosition);
-			const textAfterCursor = this.value.substring(cursorPosition);
+			const cursorPosition = this.selectionStart,
+				textBeforeCursor = this.value.substring(0, cursorPosition),
+				textAfterCursor = this.value.substring(cursorPosition);
 
 			this.value = textBeforeCursor + "\n" + textAfterCursor;
 			this.selectionStart = this.selectionEnd = cursorPosition + 1;
@@ -119,12 +121,12 @@ function initializeApp() {
 		displayMessage(userMessage);
 		messageInput.value = "";
 
-		const selectedModel = modelSelect.value;
-		const selectedTemperature = parseFloat(temperatureInput.value);
-		const maxTokens = parseInt(maxTokensInput.value);
-		const selectedTopP = parseFloat(topPInput.value);
-		const selectedFrequencyPenalty = parseFloat(frequencyPenaltyInput.value);
-		const selectedPresencePenalty = parseFloat(presencePenaltyInput.value);
+		const selectedModel = modelSelect.value,
+			selectedTemperature = parseFloat(temperatureInput.value),
+			maxTokens = parseInt(maxTokensInput.value),
+			selectedTopP = parseFloat(topPInput.value),
+			selectedFrequencyPenalty = parseFloat(frequencyPenaltyInput.value),
+			selectedPresencePenalty = parseFloat(presencePenaltyInput.value);
 
 		// Disable the send button while waiting for the assistant's response.
 		sendButton.disabled = true;
@@ -133,7 +135,7 @@ function initializeApp() {
 		loadingDiv.style.display = "block";
 
 		try {
-			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens);
+			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty);
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -198,9 +200,9 @@ function initializeApp() {
 	function createAssistantResponseContainer() {
 		loadingDiv.style.display = "none";
 
-		const messageContainer = document.createElement("div");
-		const messageElement = document.createElement("p");
-		const userLabel = document.createElement("span");
+		const messageContainer = document.createElement("div"),
+			messageElement = document.createElement("p"),
+			userLabel = document.createElement("span");
 
 		userLabel.style.fontWeight = "bold";
 		messageElement.appendChild(userLabel);
@@ -225,9 +227,9 @@ function initializeApp() {
 
 	// Function to display a message in the chat log.
 	function displayMessage(text) {
-		const messageContainer = document.createElement("div");
-		const messageElement = document.createElement("p");
-		const userLabel = document.createElement("span");
+		const messageContainer = document.createElement("div"),
+			messageElement = document.createElement("p"),
+			userLabel = document.createElement("span");
 
 		userLabel.style.fontWeight = "bold";
 		messageElement.appendChild(userLabel);

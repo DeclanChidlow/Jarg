@@ -93,20 +93,20 @@
 						<div id="setFrequencyPenalty"
 							title="Adjusts the likelihood of repetition of words or tokens based on their occurrence frequency. A higher value discourages repetition.">
 							<label for=" frequencyPenaltyInput">Frequency Penalty:</label>
-							<input type="number" id="frequencyPenaltyInput" min="-2" max="2" value="0">
+							<input type="number" id="frequencyPenaltyInput" step="0.01" min="-2" max="2" value="0">
 						</div>
 
 						<div id="setPresencePenalty"
 							title="Reduces the chance of reusing tokens that have already appeared, promoting diversity in the generated content. A higher value encourages diversity.">
 							<label for="presencePenaltyInput">Presence Penalty:</label>
-							<input type="number" id="presencePenaltyInput" min="-2" max="2" value="0">
+							<input type="number" id="presencePenaltyInput" step="0.01" min="-2" max="2" value="0">
 						</div>
 					</details>
 
-					<input type="reset" value="Reset" title="Changes the settings back to defaults.">
+					<input type="reset" value="Reset" title="Reverts the settings back to defaults.">
 				</form>
 			</div>
-			<code>Jarg v1.2.3</br> Built by <a href="https://vale.rocks">Vale</a>.</code>
+			<code>Jarg v1.2.4</br> Built by <a href="https://vale.rocks">Vale</a>.</code>
 		</div>
 	</div>
 
