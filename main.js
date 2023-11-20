@@ -135,7 +135,7 @@ function initializeApp() {
 		loadingDiv.style.display = "block";
 
 		try {
-			const assistantResponse = await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty);
+			await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty);
 
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
@@ -238,7 +238,7 @@ function initializeApp() {
 		messageContainer.id = "userMessage";
 
 		messageElement.appendChild(document.createElement("br"));
-		messageElement.innerHTML += text;
+		messageElement.innerHTML += marked.parse(text);
 
 		messageContainer.appendChild(messageElement);
 		chatLog.appendChild(messageContainer);
