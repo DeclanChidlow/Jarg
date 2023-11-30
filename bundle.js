@@ -15,6 +15,7 @@ function initializeApp() {
 	// Retrieve elements for settings
 	const temperatureInput = document.querySelector("#temperatureInput"),
 		maxTokensInput = document.querySelector("#maxTokensInput"),
+		defaultPromptInput = document.querySelector("#defaultPromptInput"),
 		topPInput = document.querySelector("#topPInput"),
 		frequencyPenaltyInput = document.querySelector("#frequencyPenaltyInput"),
 		presencePenaltyInput = document.querySelector("#presencePenaltyInput");
@@ -162,7 +163,7 @@ function initializeApp() {
 				content: [
 					{
 						type: "text",
-						text: defaultPromptInput.value + userMessage,
+						text: defaultPromptInput.value + " " + userMessage,
 					},
 				],
 			},
