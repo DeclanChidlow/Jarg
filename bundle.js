@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", initializeApp);
 // Initialize the application when the DOM content is loaded.
 function initializeApp() {
 	// Retrieve necessary elements from the DOM.
-	const apiKeyInput = document.querySelector("#apiKeyInput"),
+	const usersNameInput = document.querySelector("#usersNameInput"),
+		apiKeyInput = document.querySelector("#apiKeyInput"),
 		modelSelect = document.querySelector("#modelSelect"),
 		messageInput = document.querySelector("#messageInput"),
 		imageInput = document.querySelector("#imageInput"),
@@ -27,19 +28,21 @@ function initializeApp() {
 		sendButton = document.querySelector("#sendMessageButton");
 
 	// Check if the API key is stored in a cookie when the page loads.
-	const storedApiKey = getCookie("openaiApiKey");
+	const storedApiKey = getCookie("openaiApiKey"),
+		storedUsersName = getCookie("userName");
 
-	if (storedApiKey) {
+	if (storedApiKey && storedUsersName) {
 		// The API key is saved; show the application interface.
 		showAppInterface();
 		apiKeyInput.value = storedApiKey;
+		usersNameInput.value = storedUsersName;
 	} else {
 		// The API key is not saved; show the login interface.
 		showLoginInterface();
 	}
 
 	// Attach event listeners to UI elements.
-	document.querySelector("#saveButton").addEventListener("click", saveApiKey);
+	document.querySelector("#saveButton").addEventListener("click", saveUserDetails);
 	sendButton.addEventListener("click", sendMessage);
 
 	messageInput.addEventListener("keydown", function(e) {
@@ -68,17 +71,25 @@ function initializeApp() {
 		loginDiv.style.display = "flex";
 	}
 
-	// Function to save the API key to a cookie.
-	function saveApiKey() {
-		const apiKey = apiKeyInput.value;
+	// Function to save the user's name and API key to a cookie.
+	function saveUserDetails() {
+		const apiKey = apiKeyInput.value,
+			usersName = usersNameInput.value;
 
-		if (!apiKey) {
-			alert("API key is required to proceed.");
+		if (!apiKey || !usersName) {
+			if (!apiKey) {
+				alert("Please enter your API key first.");
+			}
+			if (!usersName) {
+				alert("Please enter your name first.");
+			}
 			return;
 		}
 
-		setCookie("openaiApiKey", apiKey, 365); // Cookie expires in 365 days.
-		alert("API key saved!");
+		// Cookies expire in 365 days
+		setCookie("openaiApiKey", apiKey, 365);
+		setCookie("usersName", usersName, 365);
+		alert("Name and API key saved!");
 		showAppInterface();
 	}
 
@@ -149,14 +160,14 @@ function initializeApp() {
 	}
 
 	// Function to fetch the assistant's response.
-	async function fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty) {
+	async function fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty, usersName) {
 		const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
 
 		const messages = [
 			{
 				role: "system",
 				content:
-					"Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible.",
+					`Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible. You are currently helping a person named ${usersNameInput.value}`,
 			},
 			{
 				role: "user",
@@ -187,6 +198,7 @@ function initializeApp() {
 			top_p: selectedTopP,
 			frequency_penalty: selectedFrequencyPenalty,
 			presence_penalty: selectedPresencePenalty,
+			user: usersName,
 			stream: true,
 		});
 
@@ -251,7 +263,8 @@ function initializeApp() {
 		const date = new Date();
 		date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
 		const expires = "expires=" + date.toUTCString();
-		document.cookie = name + "=" + value + "; " + expires;
+		const secureFlag = location.protocol === 'https:' ? 'Secure;' : '';
+		document.cookie = name + "=" + value + "; " + expires + "; " + secureFlag + "SameSite=None;";
 	}
 
 	// Function to get a cookie.
@@ -4469,7 +4482,7 @@ const addFormValue = async (form, key, value) => {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VERSION = void 0;
-exports.VERSION = '4.19.0'; // x-release-please-version
+exports.VERSION = '4.20.1'; // x-release-please-version
 
 },{}],50:[function(require,module,exports){
 'use strict'
