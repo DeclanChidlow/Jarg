@@ -29,7 +29,7 @@ function initializeApp() {
 
 	// Check if the API key is stored in a cookie when the page loads.
 	const storedApiKey = getCookie("openaiApiKey"),
-		storedUsersName = getCookie("userName");
+		storedUsersName = getCookie("usersName");
 
 	if (storedApiKey && storedUsersName) {
 		// The API key is saved; show the application interface.
@@ -45,7 +45,7 @@ function initializeApp() {
 	document.querySelector("#saveButton").addEventListener("click", saveUserDetails);
 	sendButton.addEventListener("click", sendMessage);
 
-	messageInput.addEventListener("keydown", function(e) {
+	messageInput.addEventListener("keydown", function (e) {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			sendMessage();
@@ -123,16 +123,22 @@ function initializeApp() {
 			return;
 		}
 
+		// Check if the selected model is "gpt-4-vision-preview"
 		if (modelSelect.value === "gpt-4-vision-preview") {
 			if (!imageInput.value) {
 				alert("Please enter a image URL to send.");
 				return;
+				// Retrive the image URL from the input field and display the message
+			} else {
+				const imageUrl = imageInput.value;
+				displayMessage(userMessage, imageUrl);
+				messageInput.value = "";
 			}
+		} else {
+			// Show user sent message and clear the message box
+			displayMessage(userMessage);
+			messageInput.value = "";
 		}
-
-		// Show user sent message and clear the message box
-		displayMessage(userMessage);
-		messageInput.value = "";
 
 		const selectedModel = modelSelect.value,
 			selectedTemperature = parseFloat(temperatureInput.value),
@@ -240,7 +246,7 @@ function initializeApp() {
 	}
 
 	// Function to display a message in the chat log.
-	function displayMessage(text) {
+	function displayMessage(text, imageUrl = null) {
 		const messageContainer = document.createElement("div"),
 			messageElement = document.createElement("p"),
 			userLabel = document.createElement("span");
@@ -256,31 +262,33 @@ function initializeApp() {
 
 		messageContainer.appendChild(messageElement);
 		chatLog.appendChild(messageContainer);
+
+		// If the message contains an image, display it.
+		if (imageUrl) {
+			const imgElement = document.createElement('img');
+			imgElement.src = imageUrl;
+			const lastUserMessage = messageContainer.lastChild;
+			lastUserMessage.appendChild(imgElement);
+		}
 	}
 
 	// Function to set a cookie.
 	function setCookie(name, value, days) {
 		const date = new Date();
 		date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-		const expires = "expires=" + date.toUTCString();
+		const expires = `expires=${date.toUTCString()}`;
 		const secureFlag = location.protocol === 'https:' ? 'Secure;' : '';
-		document.cookie = name + "=" + value + "; " + expires + "; " + secureFlag + "SameSite=None;";
+		document.cookie = `${name}=${value}; ${expires}; ${secureFlag}SameSite=None;`;
 	}
 
 	// Function to get a cookie.
 	function getCookie(name) {
-		const cookieName = name + "=";
+		const cookieName = `${name}=`;
 		const cookies = document.cookie.split(";");
-		for (let i = 0; i < cookies.length; i++) {
-			let cookie = cookies[i].trim();
-			if (cookie.indexOf(cookieName) === 0) {
-				return cookie.substring(cookieName.length, cookie.length);
-			}
-		}
-		return "";
+		const foundCookie = cookies.find(cookie => cookie.trim().startsWith(cookieName));
+		return foundCookie ? foundCookie.substring(cookieName.length).trim() : "";
 	}
 }
-
 },{"openai":9}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
