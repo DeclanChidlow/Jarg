@@ -1,5 +1,4 @@
 import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.28.4/+esm";
-import marked from "https://cdn.jsdelivr.net/npm/marked@12.0.0/+esm";
 
 document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -257,7 +256,7 @@ function initializeApp() {
 		messageContainer.id = "userMessage";
 
 		messageElement.appendChild(document.createElement("br"));
-		messageElement.innerHTML += marked.parse(text);
+		messageElement.innerHTML += text;
 
 		messageContainer.appendChild(messageElement);
 		chatLog.appendChild(messageContainer);
