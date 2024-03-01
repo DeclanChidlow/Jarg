@@ -10,7 +10,7 @@ body {
 
 #app {
 	display: none;
- /* Will be set to flex by JS */
+	/* Will be set to flex by JS */
 	height: 100dvh;
 }
 
@@ -50,7 +50,7 @@ select {
 }
 
 #loading {
-    display: none;
+	display: none;
 }
 
 /* Message Box */
@@ -94,26 +94,23 @@ select {
 #login {
 	display: none;
 	justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-#login div {
 	text-align: center;
+	align-items: center;
+	height: 100vh;
 }
 
 @media (max-width: 700px) {
-#app {
-    flex-direction: column;
-	height: auto;
-}
+	#app {
+		flex-direction: column;
+		height: auto;
+	}
 
-#chat-container {
-	flex-direction: row;
-}
+	#chat-container {
+		flex-direction: row;
+	}
 
-#sidebar {
-	max-width: inherit;
-	max-height: inherit;
-}
+	#sidebar {
+		max-width: inherit;
+		max-height: inherit;
+	}
 }

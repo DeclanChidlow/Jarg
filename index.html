@@ -1,120 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta property="og:site_name" content="Jarg">
-	<meta name="author" content="Declan Chidlow">
-	<title>Jarg</title>
-	<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:site_name" content="Jarg">
+    <meta name="author" content="Declan Chidlow">
+    <link rel="stylesheet" href="style.css">
+    <title>Jarg</title>
 </head>
 
 <body>
-	<noscript>Jarg will not work without Javascript enabled</noscript>
-	<div id="login">
-		<div>
-			<h1>Jarg</h1>
-			<label for="usersNameInput">Enter your name:</label>
-			</br>
-			<input type="text" id="usersNameInput" placeholder="Enter your name here...">
-			<label for="apiKeyInput">Enter your API key:</label>
-			</br>
-			<input type="text" id="apiKeyInput" placeholder="Enter API key here...">
-			<button id="saveButton">Login</button>
-			</br>
-			<p>Built by <a href="https://vale.rocks">Vale</a>.</p>
-		</div>
-	</div>
+    <noscript>Jarg will not work without JavaScript enabled.</noscript>
+    <div id="login">
+        <form>
+            <h1>Jarg</h1>
+            <label for="usersNameInput">Enter your name:</label>
+            </br>
+            <input type="text" id="usersNameInput" placeholder="Enter your name here...">
+            <label for="apiKeyInput">Enter your API key:</label>
+            </br>
+            <input type="text" id="apiKeyInput" placeholder="Enter API key here...">
+            <button id="saveButton">Login</button>
+            </br>
+            <p>Built by <a href="https://vale.rocks">Vale</a>.</p>
+        </form>
+    </div>
 
-	<div id="app">
-		<div id="chat-container">
-			<div id="chat">
-				<div id="chat-log">
-					<div id="messages">
-						<p><span style="font-weight: bold;">Jarg: </span></br>
-							Ello! I'm Jarg. What can I do for you today?</p>
-						<!-- Chat log will be displayed here -->
-					</div>
-					<div id="loading">
-						<p><span style="font-weight: bold;">Jarg: </span></br>
-							Give me a sec while I think...</p>
-					</div>
-				</div>
-				<textarea id="imageInput" placeholder="Place a link to your image here..."></textarea>
-				<div id="messageBox">
-					<textarea id="messageInput" placeholder="Type your message..."></textarea>
-					<button id="sendMessageButton" title="Sends a message to Jarg.">Send</button>
-				</div>
-			</div>
-		</div>
+    <div id="app">
+        <div id="chat-container">
+            <div id="chat">
+                <div id="chat-log">
+                    <div id="messages">
+                        <p><span style="font-weight: bold;">Jarg: </span></br>
+                            Ello! I'm Jarg. What can I do for you today?</p>
+                        <!-- Chat log will be displayed here -->
+                    </div>
+                    <div id="loading">
+                        <p><span style="font-weight: bold;">Jarg: </span></br>
+                            Give me a sec while I think...</p>
+                    </div>
+                </div>
+                <textarea id="imageInput" placeholder="Place a link to your image here..."></textarea>
+                <div id="messageBox">
+                    <textarea id="messageInput" placeholder="Type your message..."></textarea>
+                    <button id="sendMessageButton" title="Sends a message to Jarg.">Send</button>
+                </div>
+            </div>
+        </div>
 
-		<div id="sidebar">
-			<div id="settings">
-				<h2>Settings</h2>
-				<form>
-					<div id="setModel" title="Sets which model to use.">
-						<label for="modelSelect">Select an AI model:</label>
-						<select id="modelSelect">
-							<optgroup label="GPT 3.5">
+        <div id="sidebar">
+            <div id="settings">
+                <h2>Settings</h2>
+                <form>
+                    <div id="setModel" title="Sets which model to use.">
+                        <label for="modelSelect">Select an AI model:</label>
+                        <select id="modelSelect">
+							<optgroup label="GPT 3">
 								<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-								<option value="gpt-3.5-turbo-16k">GPT-3.5 Turbo - 16k</option>
-								<option value="gpt-3.5-turbo-1106">GPT-3.5 Turbo - Updated</option>
 							</optgroup>
 							<optgroup label="GPT 4">
 								<option value="gpt-4">GPT-4</option>
-								<option value="gpt-4-1106-preview">GPT-4 Turbo</option>
+								<option value="gpt-4-32k">GPT-4 32k</option>
+								<option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
 								<option value="gpt-4-vision-preview">GPT-4 Vision</option>
 							</optgroup>
 						</select>
-					</div>
+                    </div>
 
-					<div id="setTemperature"
-						title="Sets the 'randomness' of the output. A higher value means more random.">
-						<label for="temperatureInput">Temperature:</label>
-						<input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="1">
-					</div>
+                    <div id="setTemperature" title="Sets the 'randomness' of the output. A higher value means more random.">
+                        <label for="temperatureInput">Temperature:</label>
+                        <input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="1">
+                    </div>
 
-					<div id="setMaxTokens" title="Sets the maximum amount of tokens the AI can use.">
-						<label for="maxTokensInput">Max Tokens:</label>
-						<input type="number" id="maxTokensInput" min="0" max="4096" value="3000">
-					</div>
+                    <div id="setMaxTokens" title="Sets the maximum amount of tokens the AI can use.">
+                        <label for="maxTokensInput">Max Tokens:</label>
+                        <input type="number" id="maxTokensInput" min="0" max="4096" value="3000">
+                    </div>
 
-					<div id="setDefaultPrompt" title="Sets a prompt that will be included with every message.">
-						<label for="defaultPromptInput">Included Prompt:</label>
-						<textarea id="defaultPromptInput" placeholder="Type your included prompt..."></textarea>
-					</div>
+                    <div id="setDefaultPrompt" title="Sets a prompt that will be included with every message.">
+                        <label for="defaultPromptInput">Included Prompt:</label>
+                        <textarea id="defaultPromptInput" placeholder="Type your included prompt..."></textarea>
+                    </div>
 
-					<details>
-						<summary>Advanced Settings</summary>
-						<div id="setTopP"
-							title="Adjusts the variety of text generated by considering only the most likely tokens. Don't use alongside Temperature.">
-							<label for="topPInput">Top P:</label>
-							<input type="number" id="topPInput" step="0.01" min="0" max="1" value="1">
-						</div>
+                    <details>
+                        <summary>Advanced Settings</summary>
+                        <div id="setTopP" title="Adjusts the variety of text generated by considering only the most likely tokens. Don't use alongside Temperature.">
+                            <label for="topPInput">Top P:</label>
+                            <input type="number" id="topPInput" step="0.01" min="0" max="1" value="1">
+                        </div>
 
-						<div id="setFrequencyPenalty"
-							title="Adjusts the likelihood of repetition of words or tokens based on their occurrence frequency. A higher value discourages repetition.">
-							<label for=" frequencyPenaltyInput">Frequency Penalty:</label>
-							<input type="number" id="frequencyPenaltyInput" step="0.01" min="-2" max="2" value="0">
-						</div>
+                        <div id="setFrequencyPenalty" title="Adjusts the likelihood of repetition of words or tokens based on their occurrence frequency. A higher value discourages repetition.">
+                            <label for=" frequencyPenaltyInput">Frequency Penalty:</label>
+                            <input type="number" id="frequencyPenaltyInput" step="0.01" min="-2" max="2" value="0">
+                        </div>
 
-						<div id="setPresencePenalty"
-							title="Reduces the chance of reusing tokens that have already appeared, promoting diversity in the generated content. A higher value encourages diversity.">
-							<label for="presencePenaltyInput">Presence Penalty:</label>
-							<input type="number" id="presencePenaltyInput" step="0.01" min="-2" max="2" value="0">
-						</div>
-					</details>
+                        <div id="setPresencePenalty" title="Reduces the chance of reusing tokens that have already appeared, promoting diversity in the generated content. A higher value encourages diversity.">
+                            <label for="presencePenaltyInput">Presence Penalty:</label>
+                            <input type="number" id="presencePenaltyInput" step="0.01" min="-2" max="2" value="0">
+                        </div>
+                    </details>
 
-					<input type="reset" value="Reset" title="Reverts the settings back to defaults.">
-				</form>
-			</div>
-			<code>Jarg v1.2.5</br> Built by <a href="https://vale.rocks">Vale</a>.</code>
-		</div>
-	</div>
+                    <button type="reset" title="Reverts the settings back to defaults.">Reset</button>
+                </form>
+            </div>
+            <code>Jarg v1.2.6</br>Built by <a href="https://vale.rocks">Vale</a>.</code>
+        </div>
+    </div>
 
-	<script type="text/javascript" src="bundle.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 
 </html>

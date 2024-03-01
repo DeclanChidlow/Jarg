@@ -10,5 +10,3 @@
 </h1>
 
 A frontend to OpenAI's generative pretrained transformers.
-
-To make it work in a browser it bundles the OpenAI npm package into `bundle.js`.

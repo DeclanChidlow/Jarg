@@ -1,4 +1,5 @@
-const OpenAI = require("openai");
+import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.28.4/+esm";
+import marked from "https://cdn.jsdelivr.net/npm/marked@12.0.0/+esm";
 
 document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -154,7 +155,6 @@ function initializeApp() {
 
 		try {
 			await fetchAssistantResponse(apiKey, userMessage, selectedModel, selectedTemperature, maxTokens, selectedTopP, selectedFrequencyPenalty, selectedPresencePenalty);
-
 		} catch (error) {
 			console.error("Error fetching assistant response:", error);
 			alert("An error occurred while fetching the assistant response.");
@@ -171,8 +171,7 @@ function initializeApp() {
 		const messages = [
 			{
 				role: "system",
-				content:
-					`Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible. You are currently helping a person named ${usersNameInput.value}`,
+				content: `Your name is Jarg. Your role is to be a helpful assistant who provides accurate information, guidance, and support for any questions or tasks presented to you. This includes being friendly, knowledgeable, and ready to assist with a diverse array of topics, ranging from general knowledge to specialized advice. You should be opinionated whenever possible. You are currently helping a person named ${usersNameInput.value}`,
 			},
 			{
 				role: "user",
@@ -190,7 +189,7 @@ function initializeApp() {
 			messages[1].content.push({
 				type: "image_url",
 				image_url: {
-					"url": imageInput.value,
+					url: imageInput.value,
 				},
 			});
 		}
@@ -239,7 +238,8 @@ function initializeApp() {
 
 	// Function to append streamed content to the assistant response container
 	function appendToAssistantResponse(text, messageElement) {
-		if (text && text.trim() !== '') { // Check for empty or undefined text
+		if (text && text.trim() !== "") {
+			// Check for empty or undefined text
 			messageElement.innerHTML += text;
 		}
 	}
@@ -264,7 +264,7 @@ function initializeApp() {
 
 		// If the message contains an image, display it.
 		if (imageUrl) {
-			const imgElement = document.createElement('img');
+			const imgElement = document.createElement("img");
 			imgElement.src = imageUrl;
 			const lastUserMessage = messageContainer.lastChild;
 			lastUserMessage.appendChild(imgElement);
@@ -276,7 +276,7 @@ function initializeApp() {
 		const date = new Date();
 		date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
 		const expires = `expires=${date.toUTCString()}`;
-		const secureFlag = location.protocol === 'https:' ? 'Secure;' : '';
+		const secureFlag = location.protocol === "https:" ? "Secure;" : "";
 		document.cookie = `${name}=${value}; ${expires}; ${secureFlag}SameSite=None;`;
 	}
 
@@ -284,7 +284,8 @@ function initializeApp() {
 	function getCookie(name) {
 		const cookieName = `${name}=`;
 		const cookies = document.cookie.split(";");
-		const foundCookie = cookies.find(cookie => cookie.trim().startsWith(cookieName));
+		const foundCookie = cookies.find((cookie) => cookie.trim().startsWith(cookieName));
 		return foundCookie ? foundCookie.substring(cookieName.length).trim() : "";
 	}
 }
+
