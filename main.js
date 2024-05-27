@@ -97,12 +97,10 @@ function initializeApp() {
 
 	// Function to handle model change
 	function handleModelChange() {
-		// Check if the selected model is "gpt-4-vision-preview"
-		if (modelSelect.value === "gpt-4-vision-preview") {
-			// Show the div related to gpt-4-vision-preview
+		// Check if the selected model is "gpt-4o"
+		if (modelSelect.value === "gpt-4o") {
 			imageInput.style.display = "block";
 		} else {
-			// Hide the div related to gpt-4-vision-preview for other models
 			imageInput.style.display = "none";
 		}
 	}
