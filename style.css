@@ -1,8 +1,8 @@
-@import "https://vale.rocks/style/colours.css";
-@import "https://vale.rocks/style/input.css";
-@import "https://vale.rocks/style/links.css";
-@import "https://vale.rocks/style/type.css";
-@import "https://vale.rocks/style/reset.css";
+@import url("https://vale.rocks/styles/variables/colours.css");
+@import url("https://vale.rocks/styles/components/input.css");
+@import url("https://vale.rocks/styles/type/type.css");
+@import url("https://vale.rocks/styles/type/links.css");
+@import url("https://vale.rocks/styles/base/reset.css");
 
 body {
 	background-color: var(--black);
