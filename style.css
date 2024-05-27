@@ -5,6 +5,7 @@
 @import url("https://vale.rocks/styles/base/reset.css");
 
 body {
+	color: var(--bright_white);
 	background-color: var(--black);
 }
 
