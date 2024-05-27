@@ -1,4 +1,4 @@
-import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.28.4/+esm";
+import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.47.1/+esm";
 
 document.addEventListener("DOMContentLoaded", initializeApp);
 
