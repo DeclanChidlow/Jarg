@@ -1,4 +1,4 @@
-import OpenAI from "https://cdn.jsdelivr.net/npm/openai@4.47.1/+esm";
+import OpenAI from "https://esm.sh/openai";
 
 document.addEventListener("DOMContentLoaded", initializeApp);
 
@@ -285,4 +285,3 @@ function initializeApp() {
 		return foundCookie ? foundCookie.substring(cookieName.length).trim() : "";
 	}
 }
-
