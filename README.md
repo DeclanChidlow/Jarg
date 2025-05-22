@@ -1,4 +1,5 @@
-<h1 align="center">
+<div align="center">
+<h1>
   Jarg
   
   [![Stars](https://img.shields.io/github/stars/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/stargazers)
@@ -8,5 +9,10 @@
   [![Contributors](https://img.shields.io/github/contributors/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/graphs/contributors)
   [![Licence](https://img.shields.io/github/license/DeclanChidlow/Jarg?style=flat-square&logoColor=white)](https://github.com/DeclanChidlow/Jarg/blob/main/LICENCE)
 </h1>
+Web AI Front-End
+</div>
+<br/>
 
-A frontend to OpenAI's generative pretrained transformers.
+A web AI front-end for interacting with Large Language Models (LLMs).
+
+Supports OpenAI, Anthropic, Google, DeepSeek, and Ollama. Provide your own API key or hosting.

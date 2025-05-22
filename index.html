@@ -1,113 +1,241 @@
 <!doctype html>
 <html lang="en">
-	<head>
+	<head profile="http://a9.com/-/spec/opensearch/1.1/">
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta property="og:site_name" content="Jarg" />
-		<meta name="author" content="Declan Chidlow" />
-		<link rel="stylesheet" href="style.css" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 		<title>Jarg</title>
+		<meta property="og:title" content="Jarg" />
+
+		<meta
+			name="description"
+			content="Fast, lightweight search engine wrapper with !bang shortcuts and @snap site filters. Switch between search engines instantly and search specific websites with ease." />
+		<meta property="og:description" content="Lightweight search engine wrapper that enables quickly jumping between search engines and other quality of life features." />
+
+		<link rel="icon" type="image/svg+xml" href="/assets/search_favicon.svg" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/assets/search_favicon_x16.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/assets/search_favicon_x32.png" />
+		<link rel="icon" type="image/png" sizes="48x48" href="/assets/search_favicon_x48.png" />
+		<link rel="icon" type="image/png" sizes="64x64" href="/assets/search_favicon_x64.png" />
+		<link rel="icon" type="image/png" sizes="152x152" href="/assets/search_favicon_x152.png" />
+		<link rel="icon" type="image/png" sizes="192x192" href="/assets/search_favicon_x192.png" />
+		<link rel="icon" type="image/png" sizes="512x512" href="/assets/search_favicon_x512.png" />
+
+		<link rel="apple-touch-icon" sizes="152x152" href="/assets/search_favicon_x152.png" />
+		<link rel="apple-touch-icon" sizes="192x192" href="/assets/search_favicon_x192.png" />
+		<link rel="apple-touch-icon" sizes="512x512" href="/assets/search_favicon_x512.png" />
+
+		<meta property="og:image" content="/assets/og_image.png" />
+		<meta property="og:image:alt" content="A magnifying glass next to the text Vale's Search Wrapper." />
+
+		<meta property="og:site_name" content="Vale's Search Wrapper" />
+		<meta property="og:locale" content="en_AU" />
+		<meta property="og:url" content="https://search.vale.rocks" />
+		<meta property="og:type" content="website" />
+
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" content="oklch(94.75% 0.04 73)" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="oklch(18% 0.003 17.5)" media="(prefers-color-scheme: dark)" />
+
+		<meta name="author" content="Declan Chidlow" />
+		<meta name="contact" content="https://vale.rocks/contact" />
+
+		<link rel="preload" href="https://vale.rocks/assets/typefaces/Lexend/Lexend-VariableFont_wght.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href="https://vale.rocks/assets/typefaces/Fira_Code/FiraCode-VariableFont_wght.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href="https://vale.rocks/assets/typefaces/Material_Symbols_Sharp/MaterialSymbolsSharp-Regular.woff2" as="font" type="font/woff2" crossorigin />
+
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/base/reset.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/base/body.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/type/code.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/type/links.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/type/type.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/components/navbar.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/components/footer.css" />
+		<link rel="stylesheet" href="https://vale.rocks/assets/styles/components/input.css" />
+
+		<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/lib/marked.umd.min.js"></script>
+		<link rel="stylesheet" href="/styles.css" />
+
+		<link rel="search" type="application/opensearchdescription+xml" title="Jarg" href="https://jarg.vale.rocks/opensearch.xml" />
 	</head>
-
 	<body>
-		<noscript>Jarg will not work without JavaScript enabled.</noscript>
-		<div id="login">
-			<form>
-				<h1>Jarg</h1>
-				<label for="usersNameInput">Enter your name:</label>
-				<br />
-				<input type="text" id="usersNameInput" placeholder="Enter your name here..." />
-				<label for="apiKeyInput">Enter your API key:</label>
-				<br />
-				<input type="text" id="apiKeyInput" placeholder="Enter API key here..." />
-				<button id="saveButton">Login</button>
-				<br />
-				<p>Built by <a href="https://vale.rocks">Vale</a>.</p>
-			</form>
-		</div>
-
-		<div id="app">
-			<div id="chat-container">
-				<div id="chat">
-					<div id="chat-log">
-						<div id="messages">
-							<p>
-								<span style="font-weight: bold">Jarg: </span><br />
-								Ello! I'm Jarg. What can I do for you today?
-							</p>
-							<!-- Chat log will be displayed here -->
-						</div>
-						<div id="loading">
-							<p>
-								<span style="font-weight: bold">Jarg: </span><br />
-								Give me a sec while I think...
-							</p>
-						</div>
+		<main>
+			<div class="settings-panel">
+				<div class="settings">
+					<div class="form-group">
+						<label for="provider-select">Select Provider:</label>
+						<select id="provider-select">
+							<option value="" selected>Choose a model...</option>
+							<option value="openai">OpenAI</option>
+							<option value="anthropic">Anthropic</option>
+							<option value="google">Google</option>
+							<option value="deepseek">DeepSeek</option>
+							<option value="ollama">Ollama (Local)</option>
+						</select>
 					</div>
-					<textarea id="imageInput" placeholder="Place a link to your image here..."></textarea>
-					<div id="messageBox">
-						<textarea id="messageInput" placeholder="Type your message..."></textarea>
-						<button id="sendMessageButton" title="Sends a message to Jarg.">Send</button>
-					</div>
-				</div>
-			</div>
 
-			<div id="sidebar">
-				<div id="settings">
-					<h2>Settings</h2>
-					<form>
-						<div id="setModel" title="Sets which model to use.">
-							<label for="modelSelect">Select an AI model:</label>
-							<select id="modelSelect">
-								<optgroup label="OpenAI">
-									<option value="gpt-4o">GPT-4o</option>
-									<option value="gpt-4o-mini">GPT-4o Mini</option>
-									<option value="gpt-4-turbo">GPT-4 Turbo</option>
+					<!-- OpenAI Settings -->
+					<div id="openai-config" class="model-config">
+						<div class="form-group">
+							<label for="openai-key">OpenAI API Key:</label>
+							<input type="password" id="openai-key" />
+						</div>
+						<form class="form-group">
+							<label for="openai-model">Model:</label>
+							<select id="openai-model">
+								<optgroup label="Older GPT models">
+									<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
 									<option value="gpt-4">GPT-4</option>
+									<option value="gpt-4-turbo">GPT-4 Turbo</option>
+								</optgroup>
+								<optgroup label="Reasoning models">
+									<option value="o1-pro">o1-pro</option>
+									<option value="o1-mini">o1-mini</option>
+									<option value="o1">o1</option>
+									<option value="o3-mini">o3-mini</option>
+									<option value="o3">o3</option>
+									<option value="o4-mini">o4-mini</option>
+								</optgroup>
+								<optgroup label="Flagship chat models">
+									<option value="chatgpt-4o">ChatGPT-4o</option>
+									<option value="gpt-4o">GPT-4o</option>
+									<option value="gpt-4o-mini">GPT-4o mini</option>
+									<option value="gpt-4.1">GPT-4.1</option>
+								</optgroup>
+								<optgroup label="Miscellaneous models">
+									<option value="gpt-4.1-nano">GPT-4.1 nano</option>
+									<option value="gpt-4.1-mini">GPT-4.1 mini</option>
 								</optgroup>
 							</select>
+
+							<details>
+								<summary>Advanced Settings</summary>
+
+								<label for="openai-temperature">Temperature:</label>
+								<input type="number" id="openai-temperature" step="0.01" min="0" max="1" value="1" />
+
+								<label for="openai-maxTokens">Max Tokens:</label>
+								<input type="number" id="openai-maxTokens" min="0" max="4096" value="3000" />
+
+								<label for="openai-topP">Top P:</label>
+								<input type="number" id="openai-topP" step="0.01" min="0" max="1" value="1" />
+
+								<label for="openai-frequencyPenalty">Frequency Penalty:</label>
+								<input type="number" id="openai-frequencyPenalty" step="0.01" min="-2" max="2" value="0" />
+
+								<label for="openai-presencePenalty">Presence Penalty:</label>
+								<input type="number" id="openai-presencePenalty" step="0.01" min="-2" max="2" value="0" />
+							</details>
+						</form>
+					</div>
+
+					<!-- Anthropic Settings -->
+					<div id="anthropic-config" class="model-config">
+						<div class="form-group">
+							<label for="anthropic-key">Anthropic API Key:</label>
+							<input type="password" id="anthropic-key" />
 						</div>
+						<form class="form-group">
+							<label for="claude-model">Model:</label>
+							<select id="claude-model">
+								<option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+								<option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+								<option value="claude-3-opus-latest">Claude 3 Opus</option>
+								<option value="claude-3-5-haiku-latest">Claude 3.5 Haiku</option>
+								<option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
+								<option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet v2</option>
+								<option value="claude-3-7-sonnet-latest">Claude 3.7 Sonnet</option>
+							</select>
 
-						<div id="setTemperature" title="Sets the 'randomness' of the output. A higher value means more random.">
-							<label for="temperatureInput">Temperature:</label>
-							<input type="number" id="temperatureInput" step="0.01" min="0" max="1" value="1" />
+							<details>
+								<summary>Advanced Settings</summary>
+
+								<label for="anthropic-temperature">Temperature:</label>
+								<input type="number" id="anthropic-temperature" step="0.01" min="0" max="1" value="1" />
+
+								<label for="anthropic-maxTokens">Max Tokens:</label>
+								<input type="number" id="anthropic-maxTokens" min="0" max="8192" value="4096" />
+
+								<label for="anthropic-topK">Top K:</label>
+								<input type="number" id="anthropic-topK" step="0.01" min="0" max="1" value="1" />
+
+								<label for="anthropic-topP">Top P:</label>
+								<input type="number" id="anthropic-topP" step="0.01" min="0" max="1" value="1" />
+							</details>
+						</form>
+					</div>
+
+					<!-- Google Settings -->
+					<div id="google-config" class="model-config">
+						<div class="form-group">
+							<label for="google-key">Google API Key:</label>
+							<input type="password" id="gemini-key" />
 						</div>
+						<form class="form-group">
+							<label for="google-model">Model:</label>
+							<select id="google-model">
+								<option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+								<option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+								<option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8b</option>
+								<option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+								<option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+								<option value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview</option>
+								<option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro Preview</option>
+							</select>
+						</form>
+					</div>
 
-						<div id="setMaxTokens" title="Sets the maximum amount of tokens the AI can use.">
-							<label for="maxTokensInput">Max Tokens:</label>
-							<input type="number" id="maxTokensInput" min="0" max="4096" value="3000" />
+					<div id="deepseek-config" class="model-config">
+						<div class="form-group">
+							<label for="deepseek-key">DeepSeek API Key:</label>
+							<input type="password" id="deepseek-key" />
 						</div>
+						<form class="form-group">
+							<label for="deepseek-model">Model:</label>
+							<select id="deepseek-model">
+								<option value="deepseek-chat">DeepSeek Chat</option>
+								<option value="deepseek-reasoner">DeepSeek Reasoner</option>
+							</select>
 
-						<div id="setDefaultPrompt" title="Sets a prompt that will be included with every message.">
-							<label for="defaultPromptInput">Included Prompt:</label>
-							<textarea id="defaultPromptInput" placeholder="Type your included prompt..."></textarea>
+							<details>
+								<summary>Advanced Settings</summary>
+
+								<label for="deepseek-temperature">Temperature:</label>
+								<input type="number" id="deepseek-temperature" step="0.1" min="0" max="2" value="1" />
+							</details>
+						</form>
+					</div>
+
+					<!-- Ollama Settings -->
+					<div id="ollama-config" class="model-config">
+						<div class="form-group">
+							<label for="ollama-url">Ollama URL:</label>
+							<input type="url" id="ollama-url" value="http://localhost:11434" />
 						</div>
-
-						<details>
-							<summary>Advanced Settings</summary>
-							<div id="setTopP" title="Adjusts the variety of text generated by considering only the most likely tokens. Don't use alongside Temperature.">
-								<label for="topPInput">Top P:</label>
-								<input type="number" id="topPInput" step="0.01" min="0" max="1" value="1" />
-							</div>
-
-							<div id="setFrequencyPenalty" title="Adjusts the likelihood of repetition of words or tokens based on their occurrence frequency. A higher value discourages repetition.">
-								<label for=" frequencyPenaltyInput">Frequency Penalty:</label>
-								<input type="number" id="frequencyPenaltyInput" step="0.01" min="-2" max="2" value="0" />
-							</div>
-
-							<div id="setPresencePenalty" title="Reduces the chance of reusing tokens that have already appeared, promoting diversity in the generated content. A higher value encourages diversity.">
-								<label for="presencePenaltyInput">Presence Penalty:</label>
-								<input type="number" id="presencePenaltyInput" step="0.01" min="-2" max="2" value="0" />
-							</div>
-						</details>
-
-						<button type="reset" title="Reverts the settings back to defaults.">Reset</button>
-					</form>
+						<form class="form-group">
+							<label for="ollama-model">Model:</label>
+							<select id="ollama-model"></select>
+						</form>
+						<div class="form-group">
+							<label for="ollama-settings">Settings:</label>
+							<input type="text" id="ollama-settings" placeholder="e.g., /no-think" />
+						</div>
+					</div>
+					<p class="info">Jarg v2.0.0<br />Built by <a href="https://vale.rocks">Vale</a>.</p>
 				</div>
-				<code>Jarg v1.2.6<br />Built by <a href="https://vale.rocks">Vale</a>.</code>
 			</div>
-		</div>
 
-		<script type="module" src="main.js"></script>
+			<div class="chat-container">
+				<div class="messages" id="messages">
+					<p class="message assistant">Hiya! I'm Jarg.</p>
+				</div>
+				<div class="input-container">
+					<textarea id="user-input" placeholder="Type your message here..."></textarea>
+					<button id="send-button">Send</button>
+				</div>
+			</div>
+		</main>
+
+		<script type="module" src="/js/main.js"></script>
 	</body>
 </html>

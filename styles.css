@@ -1,0 +1,112 @@
+@font-face {
+	font-family: "Lexend";
+	src: url("https://vale.rocks/assets/typefaces/Lexend/Lexend-VariableFont_wght.woff2");
+}
+
+@font-face {
+	font-family: "Fira Code";
+	src: url("https://vale.rocks/assets/typefaces/Fira_Code/FiraCode-VariableFont_wght.woff2");
+}
+
+@font-face {
+	font-family: "Material Symbols";
+	src: url("https://vale.rocks/assets/typefaces/Material_Symbols_Sharp/MaterialSymbolsSharp-Regular.woff2");
+}
+
+.icons {
+	font-family: "Material Symbols";
+	user-select: none;
+}
+
+main,
+body {
+	margin: 0;
+
+	> div {
+		min-width: auto;
+	}
+}
+
+.settings-panel {
+	padding: 2rem 1rem 1rem;
+	background: light-dark(var(--white), var(--dark_grey));
+	position: relative;
+
+	button,
+	select,
+	input,
+	textarea {
+		background: light-dark(var(--bright_white), var(--grey));
+		margin-bottom: 0.5rem;
+	}
+
+	.settings {
+		position: sticky;
+		top: 2rem;
+	}
+
+	.info {
+		font-size: 0.75rem;
+		font-family: "Fira Code";
+	}
+}
+
+.chat-container {
+	display: flex;
+	flex-direction: column;
+	margin: 1rem auto;
+	max-width: 100%;
+	width: 85ch;
+	padding: 0 1rem;
+}
+
+.messages {
+	flex: 1;
+	margin: 0 2rem 1rem;
+
+	.message {
+		margin-bottom: 1rem;
+		padding: 0.5rem 1rem;
+	}
+
+	.user {
+		margin-left: 10rem;
+		text-align: right;
+		background: light-dark(var(--white), var(--dark_grey));
+	}
+
+	.assistant {
+		max-width: 90%;
+		background: light-dark(oklch(from var(--white) l c h / 0.3), var(--grey));
+	}
+
+	.error {
+		border-left: 0.3rem solid var(--red);
+	}
+}
+
+.input-container {
+	display: flex;
+	position: sticky;
+	bottom: 1rem;
+	filter: drop-shadow(0 1rem 2rem light-dark(var(--bright_white), var(--black)));
+	backdrop-filter: blur(0.75rem);
+
+	textarea,
+	button {
+		background: light-dark(oklch(from var(--grey) l c h / calc(alpha - 0.8)), oklch(from var(--grey) l c h / calc(alpha - 0.2)));
+	}
+}
+
+think {
+	font-size: 0.8rem;
+	opacity: 80%;
+}
+
+.model-config {
+	display: none;
+
+	&.active {
+		display: block;
+	}
+}
